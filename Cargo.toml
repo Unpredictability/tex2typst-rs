@@ -1,6 +1,13 @@
 [package]
 name = "tex2typst-rs"
 version = "0.1.0"
+description = "Converts LaTeX math to Typst math"
+authors = ["Jamie Kamsky <bdmundxyang@gmail.com>"]
+license = "GPL-3"
+repository = "https://github.com/Unpredictability/tex2typst-rs"
+categories = ["text-processing", "parsing", "mathematics"]
+keywords = ["latex", "tex", "math", "typst", "converting"]
+readme = "README.md"
 edition = "2021"
 
 [dependencies]
