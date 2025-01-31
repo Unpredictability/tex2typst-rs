@@ -22,3 +22,19 @@ Output:
 i_D = mu_n C_"ox" frac(W, L) [(v_"GS" - V_t ) v_"DS" - frac(1, 2) v_"DS"^2 ]
 integral.double_Sigma op("curl")(arrow(F)) dot.op upright(d) arrow(S) = integral.cont_(diff Sigma) arrow(F) times upright(d) arrow(l)
 ```
+
+Now it also supports mixed text and math mode with the new function `text_and_tex2typst`:
+
+```Rust
+use tex2typst_rs::text_and_tex2typst;
+
+fn main() {
+    let test_list = vec![
+        ("some text and some formula: \\(\\frac{1}{2}\\)", "some text and some formula: $frac(1, 2)$"),
+        ("Some text and a display math: \n\\[\n a^2 + b^2 = c^2\n\\]", "Some text and a display math: \n$\na^2 + b^2 = c^2\n$")
+    ];
+    for (text_and_tex, typst) in test_list {
+        assert_eq!(text_and_tex2typst(text_and_tex), typst);
+    }
+}
+```

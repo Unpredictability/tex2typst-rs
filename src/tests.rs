@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::tex2typst;
+    use crate::{tex2typst, text_and_tex2typst};
 
     #[test]
     fn simple_test() {
@@ -15,6 +15,17 @@ mod tests {
         ];
         for (tex, typst) in test_list {
             assert_eq!(tex2typst(tex), typst);
+        }
+    }
+
+    #[test]
+    fn test_text_and_tex2typst() {
+        let test_list = vec![
+            ("some text and some formula: \\(\\frac{1}{2}\\)", "some text and some formula: $frac(1, 2)$"),
+            ("Some text and a display math: \n\\[\n a^2 + b^2 = c^2\n\\]", "Some text and a display math: \n$\na^2 + b^2 = c^2\n$")
+        ];
+        for (text_and_tex, typst) in test_list {
+            assert_eq!(text_and_tex2typst(text_and_tex), typst);
         }
     }
 }
