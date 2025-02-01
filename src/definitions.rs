@@ -41,11 +41,11 @@ pub(crate) enum TexNodeType {
     Whitespace,
     Control,
     Ordgroup,
-    Supsub,
+    SupSub,
     UnaryFunc,
     BinaryFunc,
     Leftright,
-    Beginend,
+    BeginEnd,
     Symbol,
     Empty,
     UnknownMacro,
@@ -95,10 +95,7 @@ pub(crate) enum TypstTokenType {
     Element,
     Text,
     Comment,
-    Space,
-    SoftSpace,
     Control,
-    Newline,
 }
 
 #[derive(Debug, PartialEq)]
@@ -107,7 +104,6 @@ pub(crate) enum TypstNodeType {
     Symbol,
     Text,
     Comment,
-    Control,
     Whitespace,
     Empty,
     Group,

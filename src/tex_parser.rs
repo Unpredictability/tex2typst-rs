@@ -375,7 +375,7 @@ impl LatexParser {
             }
             (
                 TexNode::new(
-                    TexNodeType::Supsub,
+                    TexNodeType::SupSub,
                     String::new(),
                     None,
                     Some(Box::from(TexNodeData::Supsub(res))),
@@ -450,8 +450,6 @@ impl LatexParser {
     }
 
     fn parse_command_expr(&self, tokens: &[TexToken], start: usize) -> ParseResult {
-        assert_eq!(tokens[start].token_type, TexTokenType::Command);
-
         let command = &tokens[start].value; // command name starts with a \\
         let pos = start + 1;
 
@@ -607,7 +605,7 @@ impl LatexParser {
             expr_inside.pop();
         }
         let body = self.parse_aligned(&*expr_inside);
-        let res = TexNode::new(TexNodeType::Beginend, env_name, None, Some(Box::from(Array(body))));
+        let res = TexNode::new(TexNodeType::BeginEnd, env_name, None, Some(Box::from(Array(body))));
         (res, pos)
     }
 
@@ -648,6 +646,7 @@ impl LatexParser {
     }
 }
 
+// Remove all whitespace before or after _ or ^
 fn pass_ignore_whitespace_before_script_mark(tokens: Vec<TexToken>) -> Vec<TexToken> {
     let is_script_mark = |token: &TexToken| token.eq(&SUB_SYMBOL) || token.eq(&SUP_SYMBOL);
     let mut out_tokens: Vec<TexToken> = Vec::new();

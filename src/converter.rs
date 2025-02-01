@@ -29,7 +29,7 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
         TexNodeType::Symbol => TypstNode::new(TypstNodeType::Symbol, convert_token(&node.content), None, None),
         TexNodeType::Text => TypstNode::new(TypstNodeType::Text, node.content.clone(), None, None),
         TexNodeType::Comment => TypstNode::new(TypstNodeType::Comment, node.content.clone(), None, None),
-        TexNodeType::Supsub => {
+        TexNodeType::SupSub => {
             let TexNodeData::Supsub(data) = node.data.as_ref().unwrap().as_ref() else {
                 panic!()
             };
@@ -118,6 +118,15 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
             if node.content == "\\overset" {
                 return convert_overset(node);
             }
+
+            // \frac{a}{b} -> a / b
+            if node.content == "\\frac" {
+                let args = node.args.as_ref().unwrap();
+                let num = convert_tree(&args[0]);
+                let den = convert_tree(&args[1]);
+                return TypstNode::new(TypstNodeType::Fraction, "".to_string(), Some(vec![num, den]), None);
+            }
+
             TypstNode::new(
                 TypstNodeType::FuncCall,
                 convert_token(&node.content),
@@ -187,7 +196,7 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
                 None,
             )
         }
-        TexNodeType::Beginend => {
+        TexNodeType::BeginEnd => {
             let TexNodeData::Array(matrix) = node.data.as_ref().unwrap().as_ref() else {
                 panic!()
             };

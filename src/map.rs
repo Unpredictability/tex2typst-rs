@@ -58,7 +58,7 @@ pub fn get_symbol_map() -> &'static HashMap<&'static str, &'static str> {
         symbol_map.insert("approx", "approx");
         symbol_map.insert("cong", "tilde.equiv");
         symbol_map.insert("simeq", "tilde.eq");
-        symbol_map.insert("asymp", "≍"); // just use the unicode character :-)
+        symbol_map.insert("asymp", "≍"); // just use the Unicode character :-)
         symbol_map.insert("equiv", "equiv");
         symbol_map.insert("propto", "prop");
 

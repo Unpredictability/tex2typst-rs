@@ -23,18 +23,14 @@ static TYPST_NEWLINE: LazyLock<TypstToken> = LazyLock::new(|| TypstToken {
 });
 
 pub struct TypstWriter {
-    non_strict: bool,
-    keep_spaces: bool,
     buffer: String,
     queue: Vec<TypstToken>,
     inside_function_depth: usize,
 }
 
 impl TypstWriter {
-    pub fn new(non_strict: bool, keep_spaces: bool) -> Self {
+    pub fn new() -> Self {
         TypstWriter {
-            non_strict,
-            keep_spaces,
             buffer: String::new(),
             queue: Vec::new(),
             inside_function_depth: 0,
@@ -72,50 +68,44 @@ impl TypstWriter {
 
     // Serialize a tree of TypstNode into a list of TypstToken
     pub fn serialize(&mut self, node: &TypstNode) {
+        use TypstNodeType as N;
+        use TypstTokenType as T;
         match node.node_type {
-            TypstNodeType::Empty => {}
-            TypstNodeType::Atom => {
+            N::Empty => {}
+            N::Atom => {
                 if node.content == "," && self.inside_function_depth > 0 {
-                    self.queue
-                        .push(TypstToken::new(TypstTokenType::Symbol, "comma".to_string()));
+                    self.queue.push(TypstToken::new(T::Symbol, "comma".to_string()));
                 } else {
-                    self.queue
-                        .push(TypstToken::new(TypstTokenType::Element, node.content.clone()));
+                    self.queue.push(TypstToken::new(T::Element, node.content.clone()));
                 }
             }
-            TypstNodeType::Symbol => {
-                self.queue
-                    .push(TypstToken::new(TypstTokenType::Symbol, node.content.clone()));
+            N::Symbol => {
+                self.queue.push(TypstToken::new(T::Symbol, node.content.clone()));
             }
-            TypstNodeType::Text => {
-                self.queue
-                    .push(TypstToken::new(TypstTokenType::Text, node.content.clone()));
+            N::Text => {
+                self.queue.push(TypstToken::new(T::Text, node.content.clone()));
             }
-            TypstNodeType::Comment => {
-                self.queue
-                    .push(TypstToken::new(TypstTokenType::Comment, node.content.clone()));
+            N::Comment => {
+                self.queue.push(TypstToken::new(T::Comment, node.content.clone()));
             }
-            TypstNodeType::Whitespace => {
+            N::Whitespace => {
                 for c in node.content.chars() {
                     if c == ' ' {
-                        if self.keep_spaces {
-                            self.queue.push(TypstToken::new(TypstTokenType::Space, c.to_string()));
-                        }
                     } else if c == '\n' {
-                        self.queue.push(TypstToken::new(TypstTokenType::Symbol, c.to_string()));
+                        self.queue.push(TypstToken::new(T::Symbol, c.to_string()));
                     } else {
                         panic!("Unexpected whitespace character: {}", c);
                     }
                 }
             }
-            TypstNodeType::Group => {
+            N::Group => {
                 if let Some(args) = &node.args {
                     for item in args {
                         self.serialize(item);
                     }
                 }
             }
-            TypstNodeType::Supsub => {
+            N::Supsub => {
                 if let TypstNodeData::Supsub(data) = node.data.as_ref().unwrap().as_ref() {
                     self.append_with_brackets_if_needed(&data.base);
 
@@ -123,91 +113,87 @@ impl TypstWriter {
                     let has_prime = data
                         .sup
                         .as_ref()
-                        .map_or(false, |sup| sup.node_type == TypstNodeType::Atom && sup.content == "'");
+                        .map_or(false, |sup| sup.node_type == N::Atom && sup.content == "'");
                     if has_prime {
-                        self.queue
-                            .push(TypstToken::new(TypstTokenType::Element, "'".to_string()));
+                        self.queue.push(TypstToken::new(T::Element, "'".to_string()));
                         trailing_space_needed = false;
                     }
                     if let Some(sub) = &data.sub {
-                        self.queue
-                            .push(TypstToken::new(TypstTokenType::Element, "_".to_string()));
+                        self.queue.push(TypstToken::new(T::Element, "_".to_string()));
                         trailing_space_needed = self.append_with_brackets_if_needed(sub);
                     }
                     if let Some(sup) = &data.sup {
                         if !has_prime {
-                            self.queue
-                                .push(TypstToken::new(TypstTokenType::Element, "^".to_string()));
+                            self.queue.push(TypstToken::new(T::Element, "^".to_string()));
                             trailing_space_needed = self.append_with_brackets_if_needed(sup);
                         }
                     }
                     if trailing_space_needed {
-                        self.queue
-                            .push(TypstToken::new(TypstTokenType::Control, " ".to_string()));
+                        self.queue.push(TypstToken::new(T::Control, " ".to_string()));
                     }
                 }
             }
-            TypstNodeType::FuncCall => {
-                self.queue
-                    .push(TypstToken::new(TypstTokenType::Symbol, node.content.clone()));
+            N::FuncCall => {
+                self.queue.push(TypstToken::new(T::Symbol, node.content.clone()));
                 self.inside_function_depth += 1;
                 self.queue.push(TYPST_LEFT_PARENTHESIS.clone());
                 if let Some(args) = &node.args {
                     for (i, arg) in args.iter().enumerate() {
                         self.serialize(arg);
                         if i < args.len() - 1 {
-                            self.queue
-                                .push(TypstToken::new(TypstTokenType::Element, ",".to_string()));
+                            self.queue.push(TypstToken::new(T::Element, ",".to_string()));
                         }
                     }
                 }
                 if let Some(options) = &node.options {
                     for (key, value) in options {
                         self.queue
-                            .push(TypstToken::new(TypstTokenType::Symbol, format!(", {}: {}", key, value)));
+                            .push(TypstToken::new(T::Symbol, format!(", {}: {}", key, value)));
                     }
                 }
                 self.queue.push(TYPST_RIGHT_PARENTHESIS.clone());
                 self.inside_function_depth -= 1;
             }
-            TypstNodeType::Align => {
+            N::Fraction => {
+                let num = &node.args.as_ref().unwrap()[0];
+                let den = &node.args.as_ref().unwrap()[1];
+                self.smart_parenthesis(num);
+                self.queue.push(TypstToken::new(T::Symbol, "/".to_string()));
+                self.smart_parenthesis(den);
+            }
+            N::Align => {
                 if let TypstNodeData::Array(matrix) = node.data.as_ref().unwrap().as_ref() {
                     for (i, row) in matrix.iter().enumerate() {
                         for (j, cell) in row.iter().enumerate() {
                             if j > 0 {
-                                self.queue
-                                    .push(TypstToken::new(TypstTokenType::Element, "&".to_string()));
+                                self.queue.push(TypstToken::new(T::Element, "&".to_string()));
                             }
                             self.serialize(cell);
                         }
                         if i < matrix.len() - 1 {
-                            self.queue
-                                .push(TypstToken::new(TypstTokenType::Symbol, "\\".to_string()));
+                            self.queue.push(TypstToken::new(T::Symbol, "\\".to_string()));
                         }
                     }
                 }
             }
-            TypstNodeType::Matrix => {
+            N::Matrix => {
                 if let TypstNodeData::Array(matrix) = node.data.as_ref().unwrap().as_ref() {
-                    self.queue
-                        .push(TypstToken::new(TypstTokenType::Symbol, "mat".to_string()));
+                    self.queue.push(TypstToken::new(T::Symbol, "mat".to_string()));
                     self.inside_function_depth += 1;
                     self.queue.push(TYPST_LEFT_PARENTHESIS.clone());
                     if let Some(options) = &node.options {
                         for (key, value) in options {
                             self.queue
-                                .push(TypstToken::new(TypstTokenType::Symbol, format!("{}: {}, ", key, value)));
+                                .push(TypstToken::new(T::Symbol, format!("{}: {}, ", key, value)));
                         }
                     }
                     for (i, row) in matrix.iter().enumerate() {
                         for (j, cell) in row.iter().enumerate() {
                             self.serialize(cell);
                             if j < row.len() - 1 {
-                                self.queue
-                                    .push(TypstToken::new(TypstTokenType::Element, ",".to_string()));
+                                self.queue.push(TypstToken::new(T::Element, ",".to_string()));
                             } else if i < matrix.len() - 1 {
-                                self.queue
-                                    .push(TypstToken::new(TypstTokenType::Element, ";".to_string()));
+                                self.queue.push(TypstToken::new(T::Element, ";".to_string()));
                             }
                         }
                     }
@@ -215,15 +201,19 @@ impl TypstWriter {
                     self.inside_function_depth -= 1;
                 }
             }
-            TypstNodeType::Unknown => {
-                if self.non_strict {
-                    self.queue
-                        .push(TypstToken::new(TypstTokenType::Symbol, node.content.clone()));
-                } else {
-                    panic!("Unknown macro: {}", node.content);
-                }
+            N::Unknown => {
+                self.queue.push(TypstToken::new(T::Symbol, node.content.clone()));
             }
-            _ => panic!("Unimplemented node type to append: {:?}", node.node_type),
+        }
+    }
+
+    fn smart_parenthesis(&mut self, node: &TypstNode) {
+        if node.node_type == TypstNodeType::Group {
+            self.queue.push(TYPST_LEFT_PARENTHESIS.clone());
+            self.serialize(node);
+            self.queue.push(TYPST_RIGHT_PARENTHESIS.clone());
+        } else {
+            self.serialize(node);
         }
     }
 
@@ -260,12 +250,11 @@ impl TypstWriter {
         // delete soft spaces if they are not needed
         let queue_len = self.queue.len();
         for i in 0..queue_len {
-            let is_soft_space = self.queue[i].eq(&soft_space);
-            if is_soft_space {
+            if self.queue[i].eq(&soft_space) {
                 if i == queue_len - 1 {
                     self.queue[i].value = "".to_string();
                 } else {
-                    let next_is_end = self.queue[i + 1] == *TYPST_LEFT_PARENTHESIS
+                    let next_is_end = self.queue[i + 1] == *TYPST_RIGHT_PARENTHESIS
                         || self.queue[i + 1] == *TYPST_COMMA
                         || self.queue[i + 1] == *TYPST_NEWLINE;
                     if next_is_end {
