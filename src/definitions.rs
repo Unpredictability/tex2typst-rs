@@ -10,6 +10,7 @@ pub(crate) enum TexTokenType {
     Newline,
     Control,
     Unknown,
+    NoBreakSpace,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -49,6 +50,8 @@ pub(crate) enum TexNodeType {
     Symbol,
     Empty,
     UnknownMacro,
+    NoBreakSpace,
+    Unknown,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -113,6 +116,7 @@ pub(crate) enum TypstNodeType {
     Align,
     Matrix,
     Unknown,
+    NoBreakSpace,
 }
 
 #[derive(Debug, PartialEq, Clone)]

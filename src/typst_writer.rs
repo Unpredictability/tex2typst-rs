@@ -113,6 +113,9 @@ impl TypstWriter {
                     }
                 }
             }
+            N::NoBreakSpace => {
+                self.queue.push(TypstToken::new(T::Symbol, "space.nobreak".to_string()));
+            }
             N::Group => {
                 if let Some(args) = &node.args {
                     for item in args {

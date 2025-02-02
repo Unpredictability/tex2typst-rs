@@ -224,6 +224,8 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, &'static str> {
                     token = TexToken::new(TexTokenType::Element, first_char.to_string());
                 } else if "+-*/='<>!.,;:?()[]|".contains(first_char) {
                     token = TexToken::new(TexTokenType::Element, first_char.to_string());
+                } else if "~".contains(first_char) {
+                    token = TexToken::new(TexTokenType::NoBreakSpace, "space.nobreak".to_string());
                 } else {
                     token = TexToken::new(TexTokenType::Unknown, first_char.to_string());
                 }
@@ -407,6 +409,10 @@ impl LatexParser {
                 TexNode::new(TexNodeType::Whitespace, first_token.value.clone(), None, None),
                 start + 1,
             ),
+            TexTokenType::NoBreakSpace => (
+                TexNode::new(TexNodeType::NoBreakSpace, first_token.value.clone(), None, None),
+                start + 1,
+            ),
             TexTokenType::Command => {
                 if first_token.eq(&BEGIN_COMMAND) {
                     self.parse_begin_end_expr(tokens, start)
@@ -445,7 +451,10 @@ impl LatexParser {
                     _ => panic!("Unknown control sequence"),
                 }
             }
-            _ => panic!("Unknown token type"),
+            TexTokenType::Unknown => (
+                TexNode::new(TexNodeType::Unknown, first_token.value.clone(), None, None),
+                start + 1,
+            ),
         }
     }
 

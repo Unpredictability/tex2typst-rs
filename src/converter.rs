@@ -12,6 +12,7 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
     match node.node_type {
         TexNodeType::Empty => TypstNode::new(TypstNodeType::Empty, String::from(""), None, None),
         TexNodeType::Whitespace => TypstNode::new(TypstNodeType::Whitespace, node.content.clone(), None, None),
+        TexNodeType::NoBreakSpace => TypstNode::new(TypstNodeType::NoBreakSpace, node.content.clone(), None, None),
         TexNodeType::Ordgroup => TypstNode::new(
             TypstNodeType::Group,
             String::from(""),
@@ -232,6 +233,7 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
                 panic!("Unknown control sequence: {:?}", node);
             }
         }
+        TexNodeType::Unknown => TypstNode::new(TypstNodeType::Unknown, convert_token(&node.content), None, None),
     }
 }
 
