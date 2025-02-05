@@ -42,4 +42,13 @@ mod tests {
         println!("{}", &typst);
         Ok(())
     }
+
+    #[test]
+    fn test_readme() {
+        let tex = r"\widehat{f}(\xi)=\int_{-\infty}^{\infty} f(x) e^{-i 2 \pi \xi x} d x, \quad \forall \xi \in \mathbb{R}";
+        println!("{}", tex2typst(tex).unwrap());
+
+        let mixed = r"some text and some formula: \(\frac{1}{2}\)";
+        println!("{}", text_and_tex2typst(mixed).unwrap());
+    }
 }

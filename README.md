@@ -1,40 +1,61 @@
 # tex2typst-rs
 A Rust library that converts TeX code to Typst code.
 
-Mainly took insipiration from [tex2typst](https://github.com/qwinsi/tex2typst).
+<a href="https://crates.io/crates/tex2typst-rs">
+    <img alt="Crate" src="https://img.shields.io/crates/v/tex2typst-rs"
+  ></a>
+<a href="https://docs.rs/tex2typst-rs">
+    <img alt="Documentation" src="https://docs.rs/tex2typst-rs/badge.svg"
+  ></a>
+
+# Aim of this project
+
+There exist some other libraries that convert LaTeX (especially LaTeX math) to other languages. 
+However, the result may not be visually pleasing or easy to read. 
+This project aims to convert LaTeX to idiomatic Typst code, which can be very easily read and edited. 
+
+For comparison, for this LaTeX input:
+
+```latex
+\overrightarrow{P M}=(3-x-y) \overrightarrow{P A}+x \overrightarrow{P B}+(y-2) \overrightarrow{P C}
+```
+
+[`mitex`](https://crates.io/crates/mitex) gives the output:
+
+```typst
+arrow(P  M )= \(3 - x - y \) arrow(P  A )+ x  arrow(P  B )+ \(y - 2 \) arrow(P  C )
+```
+
+`tex2typst-rs` gives the output:
+
+```typst
+arrow(P M) =(3 - x - y) arrow(P A) + x arrow(P B) +(y - 2) arrow(P C)
+```
 
 # Usage
 
+See the [documentation](https://docs.rs/tex2typst-rs) for more details.
+
 ```Rust
 use tex2typst_rs::tex2typst;
+use tex2typst_rs::text_and_tex2typst;
 
 fn main() {
-    let tex1 = "i_D = \\mu_n C_\\text{ox} \\frac{W}{L} \\left[ (v_\\text{GS} - V_t)v_\\text{DS} - \\frac{1}{2} v_\\text{DS}^2 \\right]";
-    let tex2 = "\\iint_{\\Sigma} \\operatorname{curl}(\\vec{F}) \\cdot \\mathrm{d}\\vec{S} = \\oint_{\\partial \\Sigma} \\vec{F} \\times \\mathrm{d}\\vec{l}";
-    println!("{}", tex2typst(tex1));
-    println!("{}", tex2typst(tex2));
+    let tex = r"\widehat{f}(\xi)=\int_{-\infty}^{\infty} f(x) e^{-i 2 \pi \xi x} d x, \quad \forall \xi \in \mathbb{R}";
+    println!("{}", tex2typst(tex).unwrap());
+    
+    let mixed = r"some text and some formula: \(\frac{1}{2}\)";
+    println!("{}", text_and_tex2typst(mixed).unwrap());
 }
 ```
 
 Output:
 
-```
-i_D = mu_n C_"ox" frac(W, L) [(v_"GS" - V_t ) v_"DS" - frac(1, 2) v_"DS"^2 ]
-integral.double_Sigma op("curl")(arrow(F)) dot.op upright(d) arrow(S) = integral.cont_(diff Sigma) arrow(F) times upright(d) arrow(l)
+```typst
+hat(f)(xi) = int_(- infty)^infty f(x) e^(- i 2 pi xi x) d x, quad forall xi in RR
+some text and some formula: $1/2$
 ```
 
-Now it also supports mixed text and math mode with the new function `text_and_tex2typst`:
+# Acknowledgements
 
-```Rust
-use tex2typst_rs::text_and_tex2typst;
-
-fn main() {
-    let test_list = vec![
-        ("some text and some formula: \\(\\frac{1}{2}\\)", "some text and some formula: $frac(1, 2)$"),
-        ("Some text and a display math: \n\\[\n a^2 + b^2 = c^2\n\\]", "Some text and a display math: \n$\na^2 + b^2 = c^2\n$")
-    ];
-    for (text_and_tex, typst) in test_list {
-        assert_eq!(text_and_tex2typst(text_and_tex), typst);
-    }
-}
-```
+Took inspiration from [tex2typst](https://github.com/qwinsi/tex2typst).

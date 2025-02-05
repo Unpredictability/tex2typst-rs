@@ -8,6 +8,34 @@ mod tests;
 mod tex_parser;
 mod typst_writer;
 
+/// Converts a given TeX string to a Typst string.
+///
+/// This function takes a TeX string as input, parses it into a TeX tree,
+/// converts the TeX tree to a Typst tree, serializes the Typst tree, and
+/// returns the resulting Typst string.
+///
+/// # Arguments
+///
+/// * `tex` - A string slice that holds the TeX input.
+///
+/// # Returns
+///
+/// * `Result<String, String>` - On success, returns the Typst string wrapped in `Ok`.
+///   On failure, returns an error message wrapped in `Err`.
+///
+/// # Errors
+///
+/// This function will return an error if the TeX parsing, conversion, or
+/// serialization fails.
+///
+/// # Example
+///
+/// ```
+/// use tex2typst_rs::tex2typst;
+/// let tex_input = r"\frac{a}{b}";
+/// let typst_output = tex2typst(tex_input).unwrap();
+/// println!("{}", typst_output);
+/// ```
 pub fn tex2typst(tex: &str) -> Result<String, String> {
     let custom_macros = HashMap::new();
     let tex_tree = tex_parser::parse_tex(tex, &custom_macros)?;
@@ -18,7 +46,32 @@ pub fn tex2typst(tex: &str) -> Result<String, String> {
     Ok(typst)
 }
 
-//noinspection RegExpRedundantEscape
+/// Converts a given input string containing TeX math expressions to Typst format.
+///
+/// This function searches for inline and display math expressions within the input string,
+/// converts them to Typst format using the `tex2typst` function, and returns the resulting string.
+///
+/// # Arguments
+///
+/// * `input` - A string slice that holds the input text containing TeX math expressions.
+///
+/// # Returns
+///
+/// * `Result<String, String>` - On success, returns the converted string wrapped in `Ok`.
+///   On failure, returns an error message wrapped in `Err`.
+///
+/// # Errors
+///
+/// This function will return an error if the TeX to Typst conversion fails.
+///
+/// # Example
+///
+/// ```
+/// use tex2typst_rs::text_and_tex2typst;
+/// let input = r"This is inline math: \(a + b\) and this is display math: \[a^2 + b^2 = c^2\]";
+/// let output = text_and_tex2typst(input).unwrap();
+/// println!("{}", output);
+/// ```
 pub fn text_and_tex2typst(input: &str) -> Result<String, String> {
     let regex = Regex::new(r"\\\((.+?)\\\)|(?s)\\\[(.+?)\\\]").unwrap();
 
