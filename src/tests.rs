@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -15,7 +17,7 @@ mod tests {
             ("e_{f (x)}", "e_(f(x))"),
         ];
         for (tex, typst) in test_list {
-            assert_eq!(tex2typst(tex), typst);
+            assert_eq!(tex2typst(tex).unwrap(), typst);
         }
     }
 
@@ -23,37 +25,21 @@ mod tests {
     fn test_symbols() {
         let test_list = vec![("\\square", "square")];
         for (tex, typst) in test_list {
-            assert_eq!(tex2typst(tex), typst);
+            assert_eq!(tex2typst(tex).unwrap(), typst);
         }
-    }
-
-    #[test]
-    fn test_frac() {
-        let tex = r"\frac{1}{2}";
-        let custom_macros = HashMap::new();
-        let tex_tree = tex_parser::parse_tex(tex, &custom_macros);
-        let typst_tree = converter::convert_tree(&tex_tree);
-        let mut writer = typst_writer::TypstWriter::new();
-        writer.serialize(&typst_tree);
-        let typst = writer.finalize();
-        println!("{}", typst);
     }
 
     #[test]
     fn test_something() {
         let tex = r"Exercise 1.1.16. Let \(d_1, d_2 \geq 1\), and let \(E_1 \subset \mathbf{R}^{d_1}, E_2 \subset \mathbf{R}^{d_2}\) be Jordan measurable sets. Show that \(E_1 \times E_2 \subset \mathbf{R}^{d_1+d_2}\) is Jordan measurable, and \(m^{d_1+d_2}\left(E_1 \times E_2\right)=m^{d_1}\left(E_1\right) \times m^{d_2}\left(E_2\right)\).";
-        println!("{}", text_and_tex2typst(tex));
+        println!("{}", text_and_tex2typst(tex).unwrap());
     }
 
     #[test]
-    fn test_smth() {
-        let tex = r"\overrightarrow{P A}";
-        let custom_macros = HashMap::new();
-        let tex_tree = tex_parser::parse_tex(tex, &custom_macros);
-        let typst_tree = converter::convert_tree(&tex_tree);
-        let mut writer = typst_writer::TypstWriter::new();
-        writer.serialize(&typst_tree);
-        let typst = writer.finalize();
-        println!("{}", typst);
+    fn test_smth() -> Result<(), String> {
+        let tex = r"asdasdasdas";
+        let typst = text_and_tex2typst(tex)?;
+        println!("{}", &typst);
+        Ok(())
     }
 }

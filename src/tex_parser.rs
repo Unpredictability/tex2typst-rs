@@ -259,7 +259,7 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, &'static str> {
     Ok(tokens)
 }
 
-type ParseResult = (TexNode, usize);
+type ParseResult = Result<(TexNode, usize), &'static str>;
 
 static SUB_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "_".to_string()));
 static SUP_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "^".to_string()));
@@ -277,20 +277,18 @@ impl LatexParser {
         }
     }
 
-    pub fn parse(&self, tokens: Vec<TexToken>) -> TexNode {
+    pub fn parse(&self, tokens: Vec<TexToken>) -> Result<TexNode, &'static str> {
         let mut results: Vec<TexNode> = Vec::new();
         let mut pos = 0;
 
         while pos < tokens.len() {
-            let (res, new_pos) = self.parse_next_expr(&tokens, pos);
+            let (res, new_pos) = self.parse_next_expr(&tokens, pos)?;
             pos = new_pos;
-            if res.node_type == TexNodeType::Whitespace {
-                if !self.space_sensitive && res.content.replace(" ", "").is_empty() {
-                    continue;
-                }
-                if !self.newline_sensitive && res.content == "\n" {
-                    continue;
-                }
+            if res.node_type == TexNodeType::Whitespace
+                && (!self.space_sensitive && res.content.replace(" ", "").is_empty()
+                    || !self.newline_sensitive && res.content == "\n")
+            {
+                continue;
             }
             if res.node_type == TexNodeType::Control && res.content == "&" {
                 panic!("Unexpected & outside of an alignment");
@@ -299,16 +297,16 @@ impl LatexParser {
         }
 
         if results.is_empty() {
-            EMPTY_NODE.clone()
+            Ok(EMPTY_NODE.clone())
         } else if results.len() == 1 {
-            results.remove(0)
+            Ok(results.remove(0))
         } else {
-            TexNode::new(TexNodeType::Ordgroup, String::new(), Some(results), None)
+            Ok(TexNode::new(TexNodeType::Ordgroup, String::new(), Some(results), None))
         }
     }
 
     fn parse_next_expr(&self, tokens: &[TexToken], start: usize) -> ParseResult {
-        let (base, mut pos) = self.parse_next_expr_without_supsub(tokens, start);
+        let (base, mut pos) = self.parse_next_expr_without_supsub(tokens, start)?;
         let mut sub: Option<TexNode> = None;
         let mut sup: Option<TexNode> = None;
         let mut num_prime = 0;
@@ -316,13 +314,13 @@ impl LatexParser {
         num_prime += eat_primes(tokens, pos);
         pos += num_prime;
         if pos < tokens.len() && tokens[pos] == *SUB_SYMBOL {
-            let (sub_node, new_pos) = self.parse_next_expr_without_supsub(tokens, pos + 1);
+            let (sub_node, new_pos) = self.parse_next_expr_without_supsub(tokens, pos + 1)?;
             sub = Some(sub_node);
             pos = new_pos;
             num_prime += eat_primes(tokens, pos);
             pos += num_prime;
             if pos < tokens.len() && tokens[pos] == *SUP_SYMBOL {
-                let (sup_node, new_pos) = self.parse_next_expr_without_supsub(tokens, pos + 1);
+                let (sup_node, new_pos) = self.parse_next_expr_without_supsub(tokens, pos + 1)?;
                 sup = Some(sup_node);
                 pos = new_pos;
                 if eat_primes(tokens, pos) > 0 {
@@ -330,14 +328,14 @@ impl LatexParser {
                 }
             }
         } else if pos < tokens.len() && tokens[pos] == *SUP_SYMBOL {
-            let (sup_node, new_pos) = self.parse_next_expr_without_supsub(tokens, pos + 1);
+            let (sup_node, new_pos) = self.parse_next_expr_without_supsub(tokens, pos + 1)?;
             sup = Some(sup_node);
             pos = new_pos;
             if eat_primes(tokens, pos) > 0 {
                 panic!("Double superscript");
             }
             if pos < tokens.len() && tokens[pos] == *SUB_SYMBOL {
-                let (sub_node, new_pos) = self.parse_next_expr_without_supsub(tokens, pos + 1);
+                let (sub_node, new_pos) = self.parse_next_expr_without_supsub(tokens, pos + 1)?;
                 sub = Some(sub_node);
                 pos = new_pos;
                 if eat_primes(tokens, pos) > 0 {
@@ -376,7 +374,7 @@ impl LatexParser {
             } else if let Some(sup_node) = sup {
                 res.sup = Some(sup_node);
             }
-            (
+            Ok((
                 TexNode::new(
                     TexNodeType::SupSub,
                     String::new(),
@@ -384,9 +382,9 @@ impl LatexParser {
                     Some(Box::from(TexNodeData::Supsub(res))),
                 ),
                 pos,
-            )
+            ))
         } else {
-            (base, pos)
+            Ok((base, pos))
         }
     }
 
@@ -394,26 +392,26 @@ impl LatexParser {
         let first_token = &tokens[start];
         let token_type = &first_token.token_type;
         match token_type {
-            TexTokenType::Element => (
+            TexTokenType::Element => Ok((
                 TexNode::new(TexNodeType::Element, first_token.value.clone(), None, None),
                 start + 1,
-            ),
-            TexTokenType::Text => (
+            )),
+            TexTokenType::Text => Ok((
                 TexNode::new(TexNodeType::Text, first_token.value.clone(), None, None),
                 start + 1,
-            ),
-            TexTokenType::Comment => (
+            )),
+            TexTokenType::Comment => Ok((
                 TexNode::new(TexNodeType::Comment, first_token.value.clone(), None, None),
                 start + 1,
-            ),
-            TexTokenType::Space | TexTokenType::Newline => (
+            )),
+            TexTokenType::Space | TexTokenType::Newline => Ok((
                 TexNode::new(TexNodeType::Whitespace, first_token.value.clone(), None, None),
                 start + 1,
-            ),
-            TexTokenType::NoBreakSpace => (
+            )),
+            TexTokenType::NoBreakSpace => Ok((
                 TexNode::new(TexNodeType::NoBreakSpace, first_token.value.clone(), None, None),
                 start + 1,
-            ),
+            )),
             TexTokenType::Command => {
                 if first_token.eq(&BEGIN_COMMAND) {
                     self.parse_begin_end_expr(tokens, start)
@@ -433,29 +431,29 @@ impl LatexParser {
                             panic!("Unmatched '{{'");
                         }
                         let expr_inside = &tokens[start + 1..pos_closing_bracket as usize];
-                        (self.parse(expr_inside.to_vec()), pos_closing_bracket as usize + 1)
+                        Ok((self.parse(expr_inside.to_vec())?, pos_closing_bracket as usize + 1))
                     }
                     "}" => panic!("Unmatched '}}'"),
-                    "\\\\" => (
+                    "\\\\" => Ok((
                         TexNode::new(TexNodeType::Control, "\\\\".to_string(), None, None),
                         start + 1,
-                    ),
-                    "\\," => (
+                    )),
+                    "\\," => Ok((
                         TexNode::new(TexNodeType::Control, "\\,".to_string(), None, None),
                         start + 1,
-                    ),
-                    "_" | "^" => (EMPTY_NODE.clone(), start),
-                    "&" => (
+                    )),
+                    "_" | "^" => Ok((EMPTY_NODE.clone(), start)),
+                    "&" => Ok((
                         TexNode::new(TexNodeType::Control, "&".to_string(), None, None),
                         start + 1,
-                    ),
-                    _ => panic!("Unknown control sequence"),
+                    )),
+                    _ => Err("Unknown control sequence"),
                 }
             }
-            TexTokenType::Unknown => (
+            TexTokenType::Unknown => Ok((
                 TexNode::new(TexNodeType::Unknown, first_token.value.clone(), None, None),
                 start + 1,
-            ),
+            )),
         }
     }
 
@@ -471,12 +469,12 @@ impl LatexParser {
         match param_num {
             0 => {
                 if !get_symbol_map().contains_key(&command[1..]) {
-                    return (
+                    return Ok((
                         TexNode::new(TexNodeType::UnknownMacro, command.clone(), None, None),
                         pos,
-                    );
+                    ));
                 }
-                (TexNode::new(TexNodeType::Symbol, command.clone(), None, None), pos)
+                Ok((TexNode::new(TexNodeType::Symbol, command.clone(), None, None), pos))
             }
             1 => {
                 if pos >= tokens.len() {
@@ -490,10 +488,10 @@ impl LatexParser {
                         panic!("No matching right square bracket for [");
                     }
                     let expr_inside = &tokens[pos_left_square_bracket + 1..pos_right_square_bracket as usize];
-                    let exponent = self.parse(expr_inside.to_vec());
+                    let exponent = self.parse(expr_inside.to_vec())?;
                     let (arg1, new_pos) =
-                        self.parse_next_expr_without_supsub(tokens, pos_right_square_bracket as usize + 1);
-                    return (
+                        self.parse_next_expr_without_supsub(tokens, pos_right_square_bracket as usize + 1)?;
+                    return Ok((
                         TexNode::new(
                             TexNodeType::UnaryFunc,
                             command.clone(),
@@ -501,7 +499,7 @@ impl LatexParser {
                             Some(Box::from(Sqrt(exponent))),
                         ),
                         new_pos,
-                    );
+                    ));
                 } else if command == "\\text" {
                     if pos + 2 >= tokens.len() {
                         panic!("Expecting content for \\text command");
@@ -510,23 +508,23 @@ impl LatexParser {
                     assert_eq!(tokens[pos + 1].token_type, TexTokenType::Text);
                     assert_eq!(tokens[pos + 2], *RIGHT_CURLY_BRACKET);
                     let text = tokens[pos + 1].value.clone();
-                    return (TexNode::new(TexNodeType::Text, text, None, None), pos + 3);
+                    return Ok((TexNode::new(TexNodeType::Text, text, None, None), pos + 3));
                 }
-                let (arg1, new_pos) = self.parse_next_expr_without_supsub(tokens, pos);
-                (
+                let (arg1, new_pos) = self.parse_next_expr_without_supsub(tokens, pos)?;
+                Ok((
                     TexNode::new(TexNodeType::UnaryFunc, command.clone(), Some(vec![arg1]), None),
                     new_pos,
-                )
+                ))
             }
             2 => {
-                let (arg1, pos1) = self.parse_next_expr_without_supsub(tokens, pos);
-                let (arg2, pos2) = self.parse_next_expr_without_supsub(tokens, pos1);
-                (
+                let (arg1, pos1) = self.parse_next_expr_without_supsub(tokens, pos)?;
+                let (arg2, pos2) = self.parse_next_expr_without_supsub(tokens, pos1)?;
+                Ok((
                     TexNode::new(TexNodeType::BinaryFunc, command.clone(), Some(vec![arg1, arg2]), None),
                     pos2,
-                )
+                ))
             }
-            _ => panic!("Invalid number of parameters"),
+            _ => Err("Invalid number of parameters"),
         }
     }
 
@@ -537,42 +535,42 @@ impl LatexParser {
         pos += eat_whitespaces(tokens, pos).len();
 
         if pos >= tokens.len() {
-            panic!("Expecting delimiter after \\left");
+            return Err("Expecting delimiter after \\left");
         }
 
         let left_delimiter = eat_parenthesis(tokens, pos);
         if left_delimiter.is_none() {
-            panic!("Invalid delimiter after \\left");
+            return Err("Invalid delimiter after \\left");
         }
         pos += 1;
         let expr_inside_start = pos;
         let idx = find_closing_right_command(tokens, start);
         if idx == -1 {
-            panic!("No matching \\right");
+            return Err("No matching \\right");
         }
         let expr_inside_end = idx as usize;
         pos = expr_inside_end + 1;
 
         pos += eat_whitespaces(tokens, pos).len();
         if pos >= tokens.len() {
-            panic!("Expecting \\right after \\left");
+            return Err("Expecting \\right after \\left");
         }
 
         let right_delimiter = eat_parenthesis(tokens, pos);
         if right_delimiter.is_none() {
-            panic!("Invalid delimiter after \\right");
+            return Err("Invalid delimiter after \\right");
         }
         pos += 1;
 
         let expr_inside = &tokens[expr_inside_start..expr_inside_end];
-        let body = self.parse(expr_inside.to_vec());
+        let body = self.parse(expr_inside.to_vec())?;
         let args: Vec<TexNode> = vec![
             TexNode::new(TexNodeType::Element, left_delimiter.unwrap().value.clone(), None, None),
             body,
             TexNode::new(TexNodeType::Element, right_delimiter.unwrap().value.clone(), None, None),
         ];
         let res = TexNode::new(TexNodeType::Leftright, String::new(), Some(args), None);
-        (res, pos)
+        Ok((res, pos))
     }
 
     fn parse_begin_end_expr(&self, tokens: &[TexToken], start: usize) -> ParseResult {
@@ -600,7 +598,7 @@ impl LatexParser {
         assert_eq!(tokens[pos + 1].token_type, TexTokenType::Text);
         assert!(tokens[pos + 2].eq(&RIGHT_CURLY_BRACKET));
         if tokens[pos + 1].value != env_name {
-            panic!("Mismatched \\begin and \\end environments");
+            return Err("Mismatched \\begin and \\end environments");
         }
         pos += 3;
 
@@ -614,12 +612,12 @@ impl LatexParser {
         {
             expr_inside.pop();
         }
-        let body = self.parse_aligned(&*expr_inside);
+        let body = self.parse_aligned(&*expr_inside)?;
         let res = TexNode::new(TexNodeType::BeginEnd, env_name, None, Some(Box::from(Array(body))));
-        (res, pos)
+        Ok((res, pos))
     }
 
-    fn parse_aligned(&self, tokens: &[TexToken]) -> Vec<Vec<TexNode>> {
+    fn parse_aligned(&self, tokens: &[TexToken]) -> Result<Vec<Vec<TexNode>>, &'static str> {
         let mut pos = 0;
         let mut all_rows: Vec<Vec<TexNode>> = Vec::new();
         let mut row: Vec<TexNode> = Vec::new();
@@ -628,7 +626,7 @@ impl LatexParser {
         row.push(group.clone());
 
         while pos < tokens.len() {
-            let (res, new_pos) = self.parse_next_expr(tokens, pos);
+            let (res, new_pos) = self.parse_next_expr(tokens, pos)?;
             pos = new_pos;
 
             if res.node_type == TexNodeType::Whitespace {
@@ -652,7 +650,7 @@ impl LatexParser {
                 group.args.as_mut().unwrap().push(res);
             }
         }
-        all_rows
+        Ok(all_rows)
     }
 }
 
@@ -695,9 +693,9 @@ fn pass_expand_custom_tex_macros(
     out_tokens
 }
 
-pub fn parse_tex(tex: &str, custom_tex_macros: &std::collections::HashMap<String, String>) -> TexNode {
+pub fn parse_tex(tex: &str, custom_tex_macros: &std::collections::HashMap<String, String>) -> Result<TexNode, &'static str> {
     let parser = LatexParser::new(false, false);
-    let mut tokens = tokenize(tex).expect("Failed to tokenize input");
+    let mut tokens = tokenize(tex)?;
     tokens = pass_ignore_whitespace_before_script_mark(tokens);
     tokens = pass_expand_custom_tex_macros(tokens, custom_tex_macros);
     parser.parse(tokens)

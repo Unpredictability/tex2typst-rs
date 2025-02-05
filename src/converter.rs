@@ -8,12 +8,12 @@ const TYPST_INTRINSIC_SYMBOLS: &[&str] = &[
     // "sgn"
 ];
 
-pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
+pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
     match node.node_type {
-        TexNodeType::Empty => TypstNode::new(TypstNodeType::Empty, String::from(""), None, None),
-        TexNodeType::Whitespace => TypstNode::new(TypstNodeType::Whitespace, node.content.clone(), None, None),
-        TexNodeType::NoBreakSpace => TypstNode::new(TypstNodeType::NoBreakSpace, node.content.clone(), None, None),
-        TexNodeType::Ordgroup => TypstNode::new(
+        TexNodeType::Empty => Ok(TypstNode::new(TypstNodeType::Empty, String::from(""), None, None)),
+        TexNodeType::Whitespace => Ok(TypstNode::new(TypstNodeType::Whitespace, node.content.clone(), None, None)),
+        TexNodeType::NoBreakSpace => Ok(TypstNode::new(TypstNodeType::NoBreakSpace, node.content.clone(), None, None)),
+        TexNodeType::Ordgroup => Ok(TypstNode::new(
             TypstNodeType::Group,
             String::from(""),
             Some(
@@ -22,17 +22,17 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
                     .unwrap()
                     .iter()
                     .map(|arg| convert_tree(arg))
-                    .collect(),
+                    .collect::<Result<Vec<_>, String>>()?,
             ),
             None,
-        ),
-        TexNodeType::Element => TypstNode::new(TypstNodeType::Atom, convert_token(&node.content), None, None),
-        TexNodeType::Symbol => TypstNode::new(TypstNodeType::Symbol, convert_token(&node.content), None, None),
-        TexNodeType::Text => TypstNode::new(TypstNodeType::Text, node.content.clone(), None, None),
-        TexNodeType::Comment => TypstNode::new(TypstNodeType::Comment, node.content.clone(), None, None),
+        )),
+        TexNodeType::Element => Ok(TypstNode::new(TypstNodeType::Atom, convert_token(&node.content), None, None)),
+        TexNodeType::Symbol => Ok(TypstNode::new(TypstNodeType::Symbol, convert_token(&node.content), None, None)),
+        TexNodeType::Text => Ok(TypstNode::new(TypstNodeType::Text, node.content.clone(), None, None)),
+        TexNodeType::Comment => Ok(TypstNode::new(TypstNodeType::Comment, node.content.clone(), None, None)),
         TexNodeType::SupSub => {
             let TexNodeData::Supsub(data) = node.data.as_ref().unwrap().as_ref() else {
-                panic!()
+                return Err("SupSub node does not have data".to_string());
             };
             let base = &data.base;
             let sup = data.sup.as_ref();
@@ -40,29 +40,29 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
 
             // Special logic for overbrace
             if base.node_type == TexNodeType::UnaryFunc && base.content == "\\overbrace" && sup.is_some() {
-                return TypstNode::new(
+                return Ok(TypstNode::new(
                     TypstNodeType::FuncCall,
                     "overbrace".to_string(),
                     Some(vec![
-                        convert_tree(&base.args.as_ref().unwrap()[0]),
-                        convert_tree(sup.unwrap()),
+                        convert_tree(&base.args.as_ref().unwrap()[0])?,
+                        convert_tree(sup.unwrap())?,
                     ]),
                     None,
-                );
+                ));
             } else if base.node_type == TexNodeType::UnaryFunc && base.content == "\\underbrace" && sub.is_some() {
-                return TypstNode::new(
+                return Ok(TypstNode::new(
                     TypstNodeType::FuncCall,
                     "underbrace".to_string(),
                     Some(vec![
-                        convert_tree(&base.args.as_ref().unwrap()[0]),
-                        convert_tree(sub.unwrap()),
+                        convert_tree(&base.args.as_ref().unwrap()[0])?,
+                        convert_tree(sub.unwrap())?,
                     ]),
                     None,
-                );
+                ));
             }
 
             let mut typst_data = TypstSupsubData {
-                base: convert_tree(base),
+                base: convert_tree(base)?,
                 sup: None,
                 sub: None,
             };
@@ -71,18 +71,18 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
                 typst_data.base = TypstNode::new(TypstNodeType::Text, "".to_string(), None, None);
             }
             if let Some(sup) = sup {
-                typst_data.sup = Some(convert_tree(sup));
+                typst_data.sup = Some(convert_tree(sup)?);
             }
             if let Some(sub) = sub {
-                typst_data.sub = Some(convert_tree(sub));
+                typst_data.sub = Some(convert_tree(sub)?);
             }
 
-            TypstNode::new(
+            Ok(TypstNode::new(
                 TypstNodeType::Supsub,
                 "".to_string(),
                 None,
                 Some(Box::from(TypstNodeData::Supsub(typst_data))),
-            )
+            ))
         }
         TexNodeType::Leftright => {
             let args = node.args.as_ref().unwrap();
@@ -91,7 +91,7 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
             let mut group = TypstNode::new(
                 TypstNodeType::Group,
                 "".to_string(),
-                Some(args.iter().map(|arg| convert_tree(arg)).collect()),
+                Some(args.iter().map(|arg| convert_tree(arg)).collect::<Result<Vec<_>, String>>()?),
                 None,
             );
             if matches!(
@@ -103,17 +103,17 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
                     | ("\\lceil", "\\rceil")
                     | ("\\lfloor", "\\rceil")
             ) {
-                return group;
+                return Ok( group);
             }
 
             if right.content == "." {
                 group.args.as_mut().unwrap().pop();
-                return group;
+                return Ok(group);
             } else if left.content == "." {
                 group.args.as_mut().unwrap().remove(0);
-                return TypstNode::new(TypstNodeType::FuncCall, "lr".to_string(), Some(vec![group]), None);
+                return Ok(TypstNode::new(TypstNodeType::FuncCall, "lr".to_string(), Some(vec![group]), None));
             }
-            TypstNode::new(TypstNodeType::FuncCall, "lr".to_string(), Some(vec![group]), None)
+            Ok(TypstNode::new(TypstNodeType::FuncCall, "lr".to_string(), Some(vec![group]), None))
         }
         TexNodeType::BinaryFunc => {
             if node.content == "\\overset" {
@@ -123,67 +123,67 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
             // \frac{a}{b} -> a / b
             if node.content == "\\frac" {
                 let args = node.args.as_ref().unwrap();
-                let num = convert_tree(&args[0]);
-                let den = convert_tree(&args[1]);
-                return TypstNode::new(TypstNodeType::Fraction, "".to_string(), Some(vec![num, den]), None);
+                let num = convert_tree(&args[0])?;
+                let den = convert_tree(&args[1])?;
+                return Ok(TypstNode::new(TypstNodeType::Fraction, "".to_string(), Some(vec![num, den]), None));
             }
 
-            TypstNode::new(
+            Ok(TypstNode::new(
                 TypstNodeType::FuncCall,
                 convert_token(&node.content),
                 Some(
                     node.args
                         .as_ref()
-                        .unwrap()
+                        .ok_or("Binary function node does not have args")?
                         .iter()
                         .map(|arg| convert_tree(arg))
-                        .collect(),
+                        .collect::<Result<Vec<_>, String>>()?,
                 ),
                 None,
-            )
+            ))
         }
         TexNodeType::UnaryFunc => {
-            let arg0 = convert_tree(&node.args.as_ref().unwrap()[0]);
+            let arg0 = convert_tree(&node.args.as_ref().unwrap()[0])?;
             if node.content == "\\sqrt" && node.data.is_some() {
                 let TexNodeData::Sqrt(sqrt_data) = node.data.as_ref().unwrap().as_ref() else {
                     panic!()
                 };
-                let data = convert_tree(sqrt_data);
-                return TypstNode::new(
+                let data = convert_tree(sqrt_data)?;
+                return Ok(TypstNode::new(
                     TypstNodeType::FuncCall,
                     "root".to_string(),
                     Some(vec![data, arg0]),
                     None,
-                );
+                ));
             }
             if node.content == "\\mathbf" {
                 let inner = TypstNode::new(TypstNodeType::FuncCall, "bold".to_string(), Some(vec![arg0]), None);
-                return TypstNode::new(TypstNodeType::FuncCall, "upright".to_string(), Some(vec![inner]), None);
+                return Ok(TypstNode::new(TypstNodeType::FuncCall, "upright".to_string(), Some(vec![inner]), None));
             }
             if node.content == "\\mathbb"
                 && arg0.node_type == TypstNodeType::Atom
                 && arg0.content.chars().all(|c| c.is_ascii_uppercase())
             {
-                return TypstNode::new(TypstNodeType::Symbol, arg0.content.repeat(2), None, None);
+                return Ok(TypstNode::new(TypstNodeType::Symbol, arg0.content.repeat(2), None, None));
             }
             if node.content == "\\operatorname" {
                 let body = node.args.as_ref().unwrap();
                 if body.len() != 1 || body[0].node_type != TexNodeType::Text {
-                    panic!("Expecting body of \\operatorname to be text but got {:?}", node);
+                    return Err(format!("Expecting body of \\operatorname to be text but got {:?}", node));
                 }
                 let text = &body[0].content;
                 return if TYPST_INTRINSIC_SYMBOLS.contains(&text.as_str()) {
-                    TypstNode::new(TypstNodeType::Symbol, text.to_string(), None, None)
+                    Ok(TypstNode::new(TypstNodeType::Symbol, text.to_string(), None, None))
                 } else {
-                    TypstNode::new(
+                    Ok(TypstNode::new(
                         TypstNodeType::FuncCall,
                         "op".to_string(),
                         Some(vec![TypstNode::new(TypstNodeType::Text, text.to_string(), None, None)]),
                         None,
-                    )
+                    ))
                 };
             }
-            TypstNode::new(
+            Ok(TypstNode::new(
                 TypstNodeType::FuncCall,
                 convert_token(&node.content),
                 Some(
@@ -192,10 +192,10 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
                         .unwrap()
                         .iter()
                         .map(|arg| convert_tree(arg))
-                        .collect(),
+                        .collect::<Result<Vec<_>, String>>()?,
                 ),
                 None,
-            )
+            ))
         }
         TexNodeType::BeginEnd => {
             let TexNodeData::Array(matrix) = node.data.as_ref().unwrap().as_ref() else {
@@ -203,15 +203,15 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
             };
             let data: Vec<Vec<TypstNode>> = matrix
                 .iter()
-                .map(|row| row.iter().map(|n| convert_tree(n)).collect())
-                .collect();
+                .map(|row| row.iter().map(|n| convert_tree(n)).collect::<Result<Vec<_>, String>>())
+                .collect::<Result<_, String>>()?;
             if node.content.starts_with("align") {
-                TypstNode::new(
+                Ok(TypstNode::new(
                     TypstNodeType::Align,
                     "".to_string(),
                     None,
                     Some(Box::from(TypstNodeData::Array(data))),
-                )
+                ))
             } else {
                 let mut res = TypstNode::new(
                     TypstNodeType::Matrix,
@@ -220,20 +220,20 @@ pub(crate) fn convert_tree(node: &TexNode) -> TypstNode {
                     Some(Box::from(TypstNodeData::Array(data))),
                 );
                 res.set_options(HashMap::from([("delim".to_string(), "#none".to_string())]));
-                res
+                Ok(res)
             }
         }
-        TexNodeType::UnknownMacro => TypstNode::new(TypstNodeType::Unknown, convert_token(&node.content), None, None),
+        TexNodeType::UnknownMacro => Ok(TypstNode::new(TypstNodeType::Unknown, convert_token(&node.content), None, None)),
         TexNodeType::Control => {
             if node.content == "\\\\" {
-                TypstNode::new(TypstNodeType::Symbol, "\\".to_string(), None, None)
+                Ok(TypstNode::new(TypstNodeType::Symbol, "\\".to_string(), None, None))
             } else if node.content == "\\," {
-                TypstNode::new(TypstNodeType::Symbol, "thin".to_string(), None, None)
+                Ok(TypstNode::new(TypstNodeType::Symbol, "thin".to_string(), None, None))
             } else {
-                panic!("Unknown control sequence: {:?}", node);
+                return Err(format!("Unknown control sequence: {:?}", node));
             }
         }
-        TexNodeType::Unknown => TypstNode::new(TypstNodeType::Unknown, convert_token(&node.content), None, None),
+        TexNodeType::Unknown => Ok(TypstNode::new(TypstNodeType::Unknown, convert_token(&node.content), None, None)),
     }
 }
 
@@ -264,7 +264,7 @@ fn convert_token(token: &str) -> String {
     }
 }
 
-fn convert_overset(node: &TexNode) -> TypstNode {
+fn convert_overset(node: &TexNode) -> Result<TypstNode, String> {
     let args = node.args.as_ref().unwrap();
     let sup = &args[0];
     let base = &args[1];
@@ -286,25 +286,25 @@ fn convert_overset(node: &TexNode) -> TypstNode {
     let is_eq = |n: &TexNode| -> bool { n.eq(&TexNode::new(TexNodeType::Element, "=".to_string(), None, None)) };
 
     if is_def(sup) && is_eq(base) {
-        return TypstNode::new(TypstNodeType::Symbol, "eq.def".to_string(), None, None);
+        return Ok(TypstNode::new(TypstNodeType::Symbol, "eq.def".to_string(), None, None));
     }
 
     let mut op_call = TypstNode::new(
         TypstNodeType::FuncCall,
         "op".to_string(),
-        Some(vec![convert_tree(base)]),
+        Some(vec![convert_tree(base)?]),
         None,
     );
     op_call.set_options(HashMap::from([("limits".to_string(), "true".to_string())]));
 
-    TypstNode::new(
+    Ok(TypstNode::new(
         TypstNodeType::Supsub,
         "".to_string(),
         None,
         Some(Box::from(TypstNodeData::Supsub(TypstSupsubData {
             base: op_call,
-            sup: Some(convert_tree(sup)),
+            sup: Some(convert_tree(sup)?),
             sub: None,
         }))),
-    )
+    ))
 }

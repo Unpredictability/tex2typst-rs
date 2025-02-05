@@ -82,26 +82,30 @@ impl TypstWriter {
     }
 
     // Serialize a tree of TypstNode into a list of TypstToken
-    pub fn serialize(&mut self, node: &TypstNode) {
+    pub fn serialize(&mut self, node: &TypstNode) -> Result<(), String> {
         use TypstNodeType as N;
         use TypstTokenType as T;
         match node.node_type {
-            N::Empty => {}
+            N::Empty => {Ok(())}
             N::Atom => {
                 if node.content == "," && self.inside_function_depth > 0 {
                     self.queue.push(TypstToken::new(T::Symbol, "comma".to_string()));
                 } else {
                     self.queue.push(TypstToken::new(T::Element, node.content.clone()));
                 }
+                Ok(())
             }
             N::Symbol => {
                 self.queue.push(TypstToken::new(T::Symbol, node.content.clone()));
+                Ok(())
             }
             N::Text => {
                 self.queue.push(TypstToken::new(T::Text, node.content.clone()));
+                Ok(())
             }
             N::Comment => {
                 self.queue.push(TypstToken::new(T::Comment, node.content.clone()));
+                Ok(())
             }
             N::Whitespace => {
                 for c in node.content.chars() {
@@ -109,23 +113,26 @@ impl TypstWriter {
                     } else if c == '\n' {
                         self.queue.push(TypstToken::new(T::Symbol, c.to_string()));
                     } else {
-                        panic!("Unexpected whitespace character: {}", c);
+                        return Err(format!("Unexpected whitespace character: {}", c));
                     }
                 }
+                Ok(())
             }
             N::NoBreakSpace => {
                 self.queue.push(TypstToken::new(T::Symbol, "space.nobreak".to_string()));
+                Ok(())
             }
             N::Group => {
                 if let Some(args) = &node.args {
                     for item in args {
-                        self.serialize(item);
+                        self.serialize(item)?;
                     }
                 }
+                Ok(())
             }
             N::Supsub => {
                 if let TypstNodeData::Supsub(data) = node.data.as_ref().unwrap().as_ref() {
-                    self.append_with_brackets_if_needed(&data.base);
+                    self.append_with_brackets_if_needed(&data.base)?;
 
                     let mut trailing_space_needed = false;
                     let has_prime = data
@@ -138,18 +145,19 @@ impl TypstWriter {
                     }
                     if let Some(sub) = &data.sub {
                         self.queue.push(TypstToken::new(T::Element, "_".to_string()));
-                        trailing_space_needed = self.append_with_brackets_if_needed(sub);
+                        trailing_space_needed = self.append_with_brackets_if_needed(sub)?;
                     }
                     if let Some(sup) = &data.sup {
                         if !has_prime {
                             self.queue.push(TypstToken::new(T::Element, "^".to_string()));
-                            trailing_space_needed = self.append_with_brackets_if_needed(sup);
+                            trailing_space_needed = self.append_with_brackets_if_needed(sup)?;
                         }
                     }
                     if trailing_space_needed {
                         self.queue.push(TypstToken::new(T::Control, " ".to_string()));
                     }
                 }
+                Ok(())
             }
             N::FuncCall => {
                 self.queue.push(TypstToken::new(T::Symbol, node.content.clone()));
@@ -157,7 +165,7 @@ impl TypstWriter {
                 self.queue.push(TYPST_LEFT_PARENTHESIS.clone());
                 if let Some(args) = &node.args {
                     for (i, arg) in args.iter().enumerate() {
-                        self.serialize(arg);
+                        self.serialize(arg)?;
                         if i < args.len() - 1 {
                             self.queue.push(TypstToken::new(T::Element, ",".to_string()));
                         }
@@ -171,13 +179,15 @@ impl TypstWriter {
                 }
                 self.queue.push(TYPST_RIGHT_PARENTHESIS.clone());
                 self.inside_function_depth -= 1;
+                Ok(())
             }
             N::Fraction => {
                 let num = &node.args.as_ref().unwrap()[0];
                 let den = &node.args.as_ref().unwrap()[1];
-                self.smart_parenthesis(num);
+                self.smart_parenthesis(num)?;
                 self.queue.push(TypstToken::new(T::Symbol, "/".to_string()));
-                self.smart_parenthesis(den);
+                self.smart_parenthesis(den)?;
+                Ok(())
             }
             N::Align => {
                 if let TypstNodeData::Array(matrix) = node.data.as_ref().unwrap().as_ref() {
@@ -186,13 +196,14 @@ impl TypstWriter {
                             if j > 0 {
                                 self.queue.push(TypstToken::new(T::Element, "&".to_string()));
                             }
-                            self.serialize(cell);
+                            self.serialize(cell)?;
                         }
                         if i < matrix.len() - 1 {
                             self.queue.push(TypstToken::new(T::Symbol, "\\".to_string()));
                         }
                     }
                 }
+                Ok(())
             }
             N::Matrix => {
                 if let TypstNodeData::Array(matrix) = node.data.as_ref().unwrap().as_ref() {
@@ -207,7 +218,7 @@ impl TypstWriter {
                     }
                     for (i, row) in matrix.iter().enumerate() {
                         for (j, cell) in row.iter().enumerate() {
-                            self.serialize(cell);
+                            self.serialize(cell)?;
                             if j < row.len() - 1 {
                                 self.queue.push(TypstToken::new(T::Element, ",".to_string()));
                             } else if i < matrix.len() - 1 {
@@ -218,24 +229,27 @@ impl TypstWriter {
                     self.queue.push(TYPST_RIGHT_PARENTHESIS.clone());
                     self.inside_function_depth -= 1;
                 }
+                Ok(())
             }
             N::Unknown => {
                 self.queue.push(TypstToken::new(T::Symbol, node.content.clone()));
+                Ok(())
             }
         }
     }
 
-    fn smart_parenthesis(&mut self, node: &TypstNode) {
+    fn smart_parenthesis(&mut self, node: &TypstNode) -> Result<(), String> {
         if node.node_type == TypstNodeType::Group {
             self.queue.push(TYPST_LEFT_PARENTHESIS.clone());
-            self.serialize(node);
+            self.serialize(node)?;
             self.queue.push(TYPST_RIGHT_PARENTHESIS.clone());
         } else {
-            self.serialize(node);
+            self.serialize(node)?;
         }
+        Ok(())
     }
 
-    fn append_with_brackets_if_needed(&mut self, node: &TypstNode) -> bool {
+    fn append_with_brackets_if_needed(&mut self, node: &TypstNode) -> Result<bool, String> {
         let mut need_to_wrap = matches!(
             node.node_type,
             TypstNodeType::Group | TypstNodeType::Supsub | TypstNodeType::Empty
@@ -253,13 +267,13 @@ impl TypstWriter {
 
         if need_to_wrap {
             self.queue.push(TYPST_LEFT_PARENTHESIS.clone());
-            self.serialize(node);
+            self.serialize(node)?;
             self.queue.push(TYPST_RIGHT_PARENTHESIS.clone());
         } else {
-            self.serialize(node);
+            self.serialize(node)?;
         }
 
-        !need_to_wrap
+        Ok(!need_to_wrap)
     }
 
     fn flush_queue(&mut self) {
@@ -290,7 +304,7 @@ impl TypstWriter {
         self.queue.clear();
     }
 
-    pub fn finalize(&mut self) -> String {
+    pub fn finalize(&mut self) -> Result<String, String> {
         self.flush_queue();
 
         let smart_floor_pass = |input: &str| -> String {
@@ -319,7 +333,7 @@ impl TypstWriter {
             self.buffer = pass(&self.buffer);
         }
 
-        self.buffer.clone()
+        Ok(self.buffer.clone())
     }
 }
 
