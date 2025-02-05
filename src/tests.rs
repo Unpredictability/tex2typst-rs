@@ -37,8 +37,8 @@ mod tests {
 
     #[test]
     fn test_smth() -> Result<(), String> {
-        let tex = r"asdasdasdas";
-        let typst = text_and_tex2typst(tex)?;
+        let tex = r"a__";
+        let typst = tex2typst(tex)?;
         println!("{}", &typst);
         Ok(())
     }

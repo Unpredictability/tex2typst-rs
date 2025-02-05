@@ -389,71 +389,78 @@ impl LatexParser {
     }
 
     fn parse_next_expr_without_supsub(&self, tokens: &[TexToken], start: usize) -> ParseResult {
-        let first_token = &tokens[start];
-        let token_type = &first_token.token_type;
-        match token_type {
-            TexTokenType::Element => Ok((
-                TexNode::new(TexNodeType::Element, first_token.value.clone(), None, None),
-                start + 1,
-            )),
-            TexTokenType::Text => Ok((
-                TexNode::new(TexNodeType::Text, first_token.value.clone(), None, None),
-                start + 1,
-            )),
-            TexTokenType::Comment => Ok((
-                TexNode::new(TexNodeType::Comment, first_token.value.clone(), None, None),
-                start + 1,
-            )),
-            TexTokenType::Space | TexTokenType::Newline => Ok((
-                TexNode::new(TexNodeType::Whitespace, first_token.value.clone(), None, None),
-                start + 1,
-            )),
-            TexTokenType::NoBreakSpace => Ok((
-                TexNode::new(TexNodeType::NoBreakSpace, first_token.value.clone(), None, None),
-                start + 1,
-            )),
-            TexTokenType::Command => {
-                if first_token.eq(&BEGIN_COMMAND) {
-                    self.parse_begin_end_expr(tokens, start)
-                } else if first_token.eq(&LEFT_COMMAND) {
-                    self.parse_left_right_expr(tokens, start)
-                } else {
-                    self.parse_command_expr(tokens, start)
-                }
+        match tokens.get(start) {
+            None => {
+                return Err("Unexpected end of input");
             }
-            TexTokenType::Control => {
-                let control_char = &first_token.value;
-                match control_char.as_str() {
-                    "{" => {
-                        let pos_closing_bracket =
-                            find_closing_match(tokens, start, &LEFT_CURLY_BRACKET, &RIGHT_CURLY_BRACKET);
-                        if pos_closing_bracket == -1 {
-                            panic!("Unmatched '{{'");
+            Some(_first_token) => {
+                let first_token = _first_token;
+                let token_type = &first_token.token_type;
+                match token_type {
+                    TexTokenType::Element => Ok((
+                        TexNode::new(TexNodeType::Element, first_token.value.clone(), None, None),
+                        start + 1,
+                    )),
+                    TexTokenType::Text => Ok((
+                        TexNode::new(TexNodeType::Text, first_token.value.clone(), None, None),
+                        start + 1,
+                    )),
+                    TexTokenType::Comment => Ok((
+                        TexNode::new(TexNodeType::Comment, first_token.value.clone(), None, None),
+                        start + 1,
+                    )),
+                    TexTokenType::Space | TexTokenType::Newline => Ok((
+                        TexNode::new(TexNodeType::Whitespace, first_token.value.clone(), None, None),
+                        start + 1,
+                    )),
+                    TexTokenType::NoBreakSpace => Ok((
+                        TexNode::new(TexNodeType::NoBreakSpace, first_token.value.clone(), None, None),
+                        start + 1,
+                    )),
+                    TexTokenType::Command => {
+                        if first_token.eq(&BEGIN_COMMAND) {
+                            self.parse_begin_end_expr(tokens, start)
+                        } else if first_token.eq(&LEFT_COMMAND) {
+                            self.parse_left_right_expr(tokens, start)
+                        } else {
+                            self.parse_command_expr(tokens, start)
                         }
-                        let expr_inside = &tokens[start + 1..pos_closing_bracket as usize];
-                        Ok((self.parse(expr_inside.to_vec())?, pos_closing_bracket as usize + 1))
                     }
-                    "}" => panic!("Unmatched '}}'"),
-                    "\\\\" => Ok((
-                        TexNode::new(TexNodeType::Control, "\\\\".to_string(), None, None),
+                    TexTokenType::Control => {
+                        let control_char = &first_token.value;
+                        match control_char.as_str() {
+                            "{" => {
+                                let pos_closing_bracket =
+                                    find_closing_match(tokens, start, &LEFT_CURLY_BRACKET, &RIGHT_CURLY_BRACKET);
+                                if pos_closing_bracket == -1 {
+                                    panic!("Unmatched '{{'");
+                                }
+                                let expr_inside = &tokens[start + 1..pos_closing_bracket as usize];
+                                Ok((self.parse(expr_inside.to_vec())?, pos_closing_bracket as usize + 1))
+                            }
+                            "}" => panic!("Unmatched '}}'"),
+                            "\\\\" => Ok((
+                                TexNode::new(TexNodeType::Control, "\\\\".to_string(), None, None),
+                                start + 1,
+                            )),
+                            "\\," => Ok((
+                                TexNode::new(TexNodeType::Control, "\\,".to_string(), None, None),
+                                start + 1,
+                            )),
+                            "_" | "^" => Ok((EMPTY_NODE.clone(), start)),
+                            "&" => Ok((
+                                TexNode::new(TexNodeType::Control, "&".to_string(), None, None),
+                                start + 1,
+                            )),
+                            _ => Err("Unknown control sequence"),
+                        }
+                    }
+                    TexTokenType::Unknown => Ok((
+                        TexNode::new(TexNodeType::Unknown, first_token.value.clone(), None, None),
                         start + 1,
                     )),
-                    "\\," => Ok((
-                        TexNode::new(TexNodeType::Control, "\\,".to_string(), None, None),
-                        start + 1,
-                    )),
-                    "_" | "^" => Ok((EMPTY_NODE.clone(), start)),
-                    "&" => Ok((
-                        TexNode::new(TexNodeType::Control, "&".to_string(), None, None),
-                        start + 1,
-                    )),
-                    _ => Err("Unknown control sequence"),
                 }
             }
-            TexTokenType::Unknown => Ok((
-                TexNode::new(TexNodeType::Unknown, first_token.value.clone(), None, None),
-                start + 1,
-            )),
         }
     }
 
@@ -693,7 +700,10 @@ fn pass_expand_custom_tex_macros(
     out_tokens
 }
 
-pub fn parse_tex(tex: &str, custom_tex_macros: &std::collections::HashMap<String, String>) -> Result<TexNode, &'static str> {
+pub fn parse_tex(
+    tex: &str,
+    custom_tex_macros: &std::collections::HashMap<String, String>,
+) -> Result<TexNode, &'static str> {
     let parser = LatexParser::new(false, false);
     let mut tokens = tokenize(tex)?;
     tokens = pass_ignore_whitespace_before_script_mark(tokens);

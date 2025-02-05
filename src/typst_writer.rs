@@ -38,39 +38,39 @@ impl TypstWriter {
     }
 
     fn write_buffer(&mut self, token: &TypstToken) {
-        let str = token.to_string();
+        let new_str = token.to_string();
 
-        if str.is_empty() {
+        if new_str.is_empty() {
             return;
         }
 
         let mut no_need_space = false;
         // putting the first token in clause
-        no_need_space |= self.buffer.ends_with(&['(', '[', '|']) && str.starts_with(char::is_alphanumeric);
+        no_need_space |= self.buffer.ends_with(&['(', '[', '|']) && new_str.starts_with(char::is_alphanumeric);
         // closing a clause
-        no_need_space |= str.starts_with(&[')', '}', ']', '|']);
+        no_need_space |= new_str.starts_with(&[')', '}', ']', '|']);
         // putting the opening '(' for a function
-        no_need_space |= !self.buffer.ends_with('=') && str.starts_with('(');
+        no_need_space |= !self.buffer.ends_with('=') && new_str.starts_with('(');
         // putting punctuation
-        no_need_space |= str.starts_with(&['(', '_', '^', ',', ';', '!']);
+        no_need_space |= new_str.starts_with(&['(', '_', '^', ',', ';', '!']);
         // putting a prime
-        no_need_space |= str == "'";
+        no_need_space |= new_str == "'";
         // continue a number
-        no_need_space |= self.buffer.ends_with(char::is_numeric) && str.starts_with(char::is_numeric);
+        no_need_space |= self.buffer.ends_with(char::is_numeric) && new_str.starts_with(char::is_numeric);
         // leading sign. e.g. produce "+1" instead of " +1"
-        no_need_space |= self.buffer.ends_with(&['(', '[', '{']) && str.starts_with(&['-', '+'])
+        no_need_space |= self.buffer.ends_with(&['(', '[', '{']) && new_str.starts_with(&['-', '+'])
             || self.buffer == "-"
             || self.buffer == "+";
         // new line
-        no_need_space |= str.starts_with('\n');
+        no_need_space |= new_str.starts_with('\n');
         // buffer is empty
         no_need_space |= self.buffer.is_empty();
         // str is starting with a space itself
-        no_need_space |= str.starts_with(char::is_whitespace);
+        no_need_space |= new_str.starts_with(char::is_whitespace);
         // "&=" instead of "& ="
-        no_need_space |= self.buffer.ends_with('&') && str == "=";
+        no_need_space |= self.buffer.ends_with('&') && new_str == "=";
         // before or after a slash e.g. "a/b" instead of "a / b"
-        no_need_space |= self.buffer.ends_with('/') || str.starts_with('/');
+        no_need_space |= self.buffer.ends_with('/') || new_str.starts_with('/');
         // other cases
         no_need_space |= self.buffer.ends_with(&[' ', '_', '^', '{', '(']);
 
@@ -78,7 +78,7 @@ impl TypstWriter {
             self.buffer.push(' ');
         }
 
-        self.buffer.push_str(&str);
+        self.buffer.push_str(&new_str);
     }
 
     // Serialize a tree of TypstNode into a list of TypstToken
