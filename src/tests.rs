@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_smth() {
-        let tex = r"~";
+        let tex = r"\overrightarrow{P A}";
         let custom_macros = HashMap::new();
         let tex_tree = tex_parser::parse_tex(tex, &custom_macros);
         let typst_tree = converter::convert_tree(&tex_tree);

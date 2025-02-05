@@ -31,6 +31,7 @@ const UNARY_COMMANDS: &[&str] = &[
     "underbrace",
     "underline",
     "vec",
+    "overrightarrow",
     "widehat",
     "widetilde",
 ];

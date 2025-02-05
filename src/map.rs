@@ -7,6 +7,7 @@ pub fn get_symbol_map() -> &'static HashMap<&'static str, &'static str> {
         let mut symbol_map = HashMap::new();
         symbol_map.insert("nonumber", "");
         symbol_map.insert("vec", "arrow");
+        symbol_map.insert("overrightarrow", "arrow");
         symbol_map.insert("neq", "eq.not");
         symbol_map.insert("dot", "dot");
         symbol_map.insert("ddot", "dot.double");
