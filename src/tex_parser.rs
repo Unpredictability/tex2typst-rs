@@ -391,7 +391,7 @@ impl LatexParser {
     fn parse_next_expr_without_supsub(&self, tokens: &[TexToken], start: usize) -> ParseResult {
         match tokens.get(start) {
             None => {
-                return Err("Unexpected end of input");
+                Err("Unexpected end of input")
             }
             Some(_first_token) => {
                 let first_token = _first_token;
