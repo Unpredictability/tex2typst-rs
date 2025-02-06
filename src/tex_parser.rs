@@ -158,7 +158,7 @@ fn find_closing_curly_bracket_char(latex: &str, start: usize) -> Result<usize, &
     Ok(pos - 1)
 }
 
-pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, &'static str> {
+pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
     let mut tokens: Vec<TexToken> = Vec::new();
     let mut pos = 0;
 
@@ -201,7 +201,7 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, &'static str> {
             }
             '\\' => {
                 if pos + 1 >= latex.len() {
-                    return Err("Expecting command name after \\");
+                    return Err("Expecting command name after '\\'".to_string());
                 }
                 let first_two_chars = &latex[pos..pos + 2];
                 if ["\\\\", "\\,"].contains(&first_two_chars) {
@@ -259,7 +259,7 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, &'static str> {
     Ok(tokens)
 }
 
-type ParseResult = Result<(TexNode, usize), &'static str>;
+type ParseResult = Result<(TexNode, usize), String>;
 
 static SUB_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "_".to_string()));
 static SUP_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "^".to_string()));
@@ -277,7 +277,7 @@ impl LatexParser {
         }
     }
 
-    pub fn parse(&self, tokens: Vec<TexToken>) -> Result<TexNode, &'static str> {
+    pub fn parse(&self, tokens: Vec<TexToken>) -> Result<TexNode, String> {
         let mut results: Vec<TexNode> = Vec::new();
         let mut pos = 0;
 
@@ -291,9 +291,10 @@ impl LatexParser {
                 continue;
             }
             if res.node_type == TexNodeType::Control && res.content == "&" {
-                panic!("Unexpected & outside of an alignment");
+                return Err("Unexpected & outside of an alignment".to_string());
+            } else {
+                results.push(res);
             }
-            results.push(res);
         }
 
         if results.is_empty() {
@@ -390,9 +391,7 @@ impl LatexParser {
 
     fn parse_next_expr_without_supsub(&self, tokens: &[TexToken], start: usize) -> ParseResult {
         match tokens.get(start) {
-            None => {
-                Err("Unexpected end of input")
-            }
+            None => Err("Unexpected end of input".to_string()),
             Some(_first_token) => {
                 let first_token = _first_token;
                 let token_type = &first_token.token_type;
@@ -433,12 +432,13 @@ impl LatexParser {
                                 let pos_closing_bracket =
                                     find_closing_match(tokens, start, &LEFT_CURLY_BRACKET, &RIGHT_CURLY_BRACKET);
                                 if pos_closing_bracket == -1 {
-                                    panic!("Unmatched '{{'");
+                                    Err("Unmatched '{'".to_string())
+                                } else {
+                                    let expr_inside = &tokens[start + 1..pos_closing_bracket as usize];
+                                    Ok((self.parse(expr_inside.to_vec())?, pos_closing_bracket as usize + 1))
                                 }
-                                let expr_inside = &tokens[start + 1..pos_closing_bracket as usize];
-                                Ok((self.parse(expr_inside.to_vec())?, pos_closing_bracket as usize + 1))
                             }
-                            "}" => panic!("Unmatched '}}'"),
+                            "}" => Err("Unexpected '}'".to_string()),
                             "\\\\" => Ok((
                                 TexNode::new(TexNodeType::Control, "\\\\".to_string(), None, None),
                                 start + 1,
@@ -452,7 +452,7 @@ impl LatexParser {
                                 TexNode::new(TexNodeType::Control, "&".to_string(), None, None),
                                 start + 1,
                             )),
-                            _ => Err("Unknown control sequence"),
+                            _ => Err("Unknown control sequence".to_string()),
                         }
                     }
                     TexTokenType::Unknown => Ok((
@@ -485,14 +485,14 @@ impl LatexParser {
             }
             1 => {
                 if pos >= tokens.len() {
-                    panic!("Expecting argument for {}", command);
+                    return Err(format!("Expecting argument for {}", command));
                 }
                 if command == "\\sqrt" && pos < tokens.len() && tokens[pos] == *LEFT_SQUARE_BRACKET {
                     let pos_left_square_bracket = pos;
                     let pos_right_square_bracket =
                         find_closing_match(tokens, pos, &LEFT_SQUARE_BRACKET, &RIGHT_SQUARE_BRACKET);
                     if pos_right_square_bracket == -1 {
-                        panic!("No matching right square bracket for [");
+                        return Err("No matching right square bracket for [".to_string());
                     }
                     let expr_inside = &tokens[pos_left_square_bracket + 1..pos_right_square_bracket as usize];
                     let exponent = self.parse(expr_inside.to_vec())?;
@@ -531,7 +531,7 @@ impl LatexParser {
                     pos2,
                 ))
             }
-            _ => Err("Invalid number of parameters"),
+            _ => Err("Invalid number of parameters".to_string()),
         }
     }
 
@@ -542,30 +542,30 @@ impl LatexParser {
         pos += eat_whitespaces(tokens, pos).len();
 
         if pos >= tokens.len() {
-            return Err("Expecting delimiter after \\left");
+            return Err("Expecting delimiter after \\left".to_string());
         }
 
         let left_delimiter = eat_parenthesis(tokens, pos);
         if left_delimiter.is_none() {
-            return Err("Invalid delimiter after \\left");
+            return Err("Invalid delimiter after \\left".to_string());
         }
         pos += 1;
         let expr_inside_start = pos;
         let idx = find_closing_right_command(tokens, start);
         if idx == -1 {
-            return Err("No matching \\right");
+            return Err("No matching \\right".to_string());
         }
         let expr_inside_end = idx as usize;
         pos = expr_inside_end + 1;
 
         pos += eat_whitespaces(tokens, pos).len();
         if pos >= tokens.len() {
-            return Err("Expecting \\right after \\left");
+            return Err("Expecting \\right after \\left".to_string());
         }
 
         let right_delimiter = eat_parenthesis(tokens, pos);
         if right_delimiter.is_none() {
-            return Err("Invalid delimiter after \\right");
+            return Err("Invalid delimiter after \\right".to_string());
         }
         pos += 1;
 
@@ -605,7 +605,7 @@ impl LatexParser {
         assert_eq!(tokens[pos + 1].token_type, TexTokenType::Text);
         assert!(tokens[pos + 2].eq(&RIGHT_CURLY_BRACKET));
         if tokens[pos + 1].value != env_name {
-            return Err("Mismatched \\begin and \\end environments");
+            return Err("Mismatched \\begin and \\end environments".to_string());
         }
         pos += 3;
 
@@ -624,7 +624,7 @@ impl LatexParser {
         Ok((res, pos))
     }
 
-    fn parse_aligned(&self, tokens: &[TexToken]) -> Result<Vec<Vec<TexNode>>, &'static str> {
+    fn parse_aligned(&self, tokens: &[TexToken]) -> Result<Vec<Vec<TexNode>>, String> {
         let mut pos = 0;
         let mut all_rows: Vec<Vec<TexNode>> = Vec::new();
         let mut row: Vec<TexNode> = Vec::new();
@@ -703,7 +703,7 @@ fn pass_expand_custom_tex_macros(
 pub fn parse_tex(
     tex: &str,
     custom_tex_macros: &std::collections::HashMap<String, String>,
-) -> Result<TexNode, &'static str> {
+) -> Result<TexNode, String> {
     let parser = LatexParser::new(false, false);
     let mut tokens = tokenize(tex)?;
     tokens = pass_ignore_whitespace_before_script_mark(tokens);
