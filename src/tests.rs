@@ -3,7 +3,9 @@
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use crate::{converter, tex2typst, tex_parser, text_and_tex2typst, typst_writer};
+    use std::error::Error;
+    use std::result;
+    use crate::{converter, tex2typst, tex2typst_with_macros, tex_parser, text_and_tex2typst, typst_writer};
 
     #[test]
     fn simple_test() {
@@ -41,6 +43,22 @@ mod tests {
         let typst = text_and_tex2typst(tex).unwrap_or_else(|e| format!("Error: {}", e));
         println!("{}", &typst);
         Ok(())
+    }
+
+    #[test]
+    fn test_macros() {
+        let tex = r"\d^2";
+        let mut custom_macros = HashMap::new();
+        custom_macros.insert(r"\d".to_string(), r"\partial".to_string());
+        let result = tex2typst_with_macros(tex, &custom_macros).unwrap_or_else(|e| format!("Error: {}", e));
+        println!("{}", result);
+    }
+
+    #[test]
+    fn test_floor() {
+        let tex = r"\left\lfloor \frac{a}{b} \right\rfloor \floor{\frac{a}{b}}";
+        let result = tex2typst(tex).unwrap();
+        println!("{}", result);
     }
 
     #[test]

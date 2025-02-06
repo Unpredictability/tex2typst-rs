@@ -46,6 +46,15 @@ pub fn tex2typst(tex: &str) -> Result<String, String> {
     Ok(typst)
 }
 
+pub fn tex2typst_with_macros(tex: &str, custom_macros: &HashMap<String, String>) -> Result<String, String> {
+    let tex_tree = tex_parser::parse_tex(tex, custom_macros)?;
+    let typst_tree = converter::convert_tree(&tex_tree)?;
+    let mut writer = typst_writer::TypstWriter::new();
+    writer.serialize(&typst_tree)?;
+    let typst = writer.finalize()?;
+    Ok(typst)
+}
+
 /// Converts a given input string containing TeX math expressions to Typst format.
 ///
 /// This function searches for inline and display math expressions within the input string,
