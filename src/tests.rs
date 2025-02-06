@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn test_smth() -> Result<(), String> {
-        let tex = r"\[\sqrt[a]{123} \frac{a\frac{a}{b}}{b} \frac{a}{b}\]";
+        let tex = r"\[\sqrt[a]{123} \frac{a\frac{a}{b}}{b} \frac{a}{b} !@#@$#%\]";
         let typst = text_and_tex2typst(tex).unwrap_or_else(|e| format!("Error: {}", e));
         println!("{}", &typst);
         Ok(())
