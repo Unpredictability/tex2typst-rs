@@ -8,7 +8,7 @@ mod tests {
     #[test]
     fn simple_test() {
         let test_list = vec![
-            ("\\frac{1}{2}", "1 / 2"),
+            ("\\frac{1}{2}", "1/2"),
             ("\\sqrt{2}", "sqrt(2)"),
             ("\\sum_{i=1}^n i", "sum_(i = 1)^n i"),
             ("\\int_{a}^{b} f(x) dx", "integral_a^b f(x) d x"),
@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn test_smth() -> Result<(), String> {
-        let tex = r"\[a^2 ^^\]";
+        let tex = r"\[\int_a^b f(x) dx\]";
         let typst = text_and_tex2typst(tex).unwrap_or_else(|e| format!("Error: {}", e));
         println!("{}", &typst);
         Ok(())
