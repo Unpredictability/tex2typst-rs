@@ -34,6 +34,7 @@ const UNARY_COMMANDS: &[&str] = &[
     "overrightarrow",
     "widehat",
     "widetilde",
+    "floor", // This is a custom macro
 ];
 
 const BINARY_COMMANDS: &[&str] = &["frac", "tfrac", "binom", "dbinom", "dfrac", "tbinom", "overset"];
@@ -700,10 +701,7 @@ fn pass_expand_custom_tex_macros(
     out_tokens
 }
 
-pub fn parse_tex(
-    tex: &str,
-    custom_tex_macros: &std::collections::HashMap<String, String>,
-) -> Result<TexNode, String> {
+pub fn parse_tex(tex: &str, custom_tex_macros: &std::collections::HashMap<String, String>) -> Result<TexNode, String> {
     let parser = LatexParser::new(false, false);
     let mut tokens = tokenize(tex)?;
     tokens = pass_ignore_whitespace_before_script_mark(tokens);
