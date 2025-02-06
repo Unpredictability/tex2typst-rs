@@ -37,8 +37,8 @@ mod tests {
 
     #[test]
     fn test_smth() -> Result<(), String> {
-        let tex = r"/\\";
-        let typst = tex2typst(tex)?;
+        let tex = r"\(asdasd^\)";
+        let typst = text_and_tex2typst(tex).unwrap_or_else(|e| format!("Error: {}", e));
         println!("{}", &typst);
         Ok(())
     }

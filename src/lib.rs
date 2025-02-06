@@ -1,4 +1,4 @@
-use regex::Regex;
+use regex::{Captures, Regex};
 use std::collections::HashMap;
 
 mod converter;
@@ -75,21 +75,34 @@ pub fn tex2typst(tex: &str) -> Result<String, String> {
 pub fn text_and_tex2typst(input: &str) -> Result<String, String> {
     let regex = Regex::new(r"\\\((.+?)\\\)|(?s)\\\[(.+?)\\\]").unwrap();
 
-    let output = regex.replace_all(input, |caps: &regex::Captures| {
+    replace_all(&regex, input, |caps: &Captures| {
         if let Some(inline_math) = caps.get(1) {
-            let typst_math = tex2typst(inline_math.as_str().trim())
-                .map_err(|e| e.to_string())
-                .unwrap();
-            format!("${}$", typst_math)
+            let typst_math = tex2typst(inline_math.as_str().trim())?;
+            Ok(format!("${}$", typst_math))
         } else if let Some(display_math) = caps.get(2) {
             let typst_math = tex2typst(display_math.as_str().trim())
                 .map_err(|e| e.to_string())
                 .unwrap();
-            format!("$\n{}\n$", typst_math)
+            Ok(format!("$\n{}\n$", typst_math))
         } else {
-            caps[0].to_string()
+            Ok(caps[0].to_string())
         }
-    });
+    })
+}
 
-    Ok(output.to_string())
+fn replace_all<E>(
+    re: &Regex,
+    haystack: &str,
+    replacement: impl Fn(&Captures) -> Result<String, E>,
+) -> Result<String, E> {
+    let mut new = String::with_capacity(haystack.len());
+    let mut last_match = 0;
+    for caps in re.captures_iter(haystack) {
+        let m = caps.get(0).unwrap();
+        new.push_str(&haystack[last_match..m.start()]);
+        new.push_str(&replacement(&caps)?);
+        last_match = m.end();
+    }
+    new.push_str(&haystack[last_match..]);
+    Ok(new)
 }
