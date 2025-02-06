@@ -80,9 +80,7 @@ pub fn text_and_tex2typst(input: &str) -> Result<String, String> {
             let typst_math = tex2typst(inline_math.as_str().trim())?;
             Ok(format!("${}$", typst_math))
         } else if let Some(display_math) = caps.get(2) {
-            let typst_math = tex2typst(display_math.as_str().trim())
-                .map_err(|e| e.to_string())
-                .unwrap();
+            let typst_math = tex2typst(display_math.as_str().trim()).map_err(|e| e.to_string())?;
             Ok(format!("$\n{}\n$", typst_math))
         } else {
             Ok(caps[0].to_string())

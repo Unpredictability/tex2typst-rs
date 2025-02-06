@@ -1,6 +1,6 @@
 [package]
 name = "tex2typst-rs"
-version = "0.3.3"
+version = "0.3.4"
 description = "Converts LaTeX math to Typst math"
 authors = ["Jamie <bdmundxyang@gmail.com>"]
 license = "GPL-3.0-or-later"

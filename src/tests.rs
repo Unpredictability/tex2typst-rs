@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn test_smth() -> Result<(), String> {
-        let tex = r"\(asdasd^\)";
+        let tex = r"\[a^2 ^^\]";
         let typst = text_and_tex2typst(tex).unwrap_or_else(|e| format!("Error: {}", e));
         println!("{}", &typst);
         Ok(())
