@@ -22,5 +22,8 @@
         </list>
       </option>
     </inspection_tool>
+    <inspection_tool class="RsDuplicateHashKey" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="Project Files" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
   </profile>
 </component>
