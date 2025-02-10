@@ -73,6 +73,13 @@ mod tests {
     }
 
     #[test]
+    fn test_cn_chars() {
+        let tex = r"\text{中文}";
+        let result = tex2typst(tex).unwrap();
+        assert_eq!(result, "\"中文\"");
+    }
+
+    #[test]
     fn test_readme() {
         let tex = r"\widehat{f}(\xi)=\int_{-\infty}^{\infty} f(x) e^{-i 2 \pi \xi x} d x, \quad \forall \xi \in \mathbb{R}";
         println!("{}", tex2typst(tex).unwrap());

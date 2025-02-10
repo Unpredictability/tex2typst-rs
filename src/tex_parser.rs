@@ -91,12 +91,12 @@ fn eat_primes(tokens: &[TexToken], start: usize) -> usize {
     pos - start
 }
 
-fn eat_command_name(latex: &str, start: usize) -> &str {
+fn eat_command_name(latex:&Vec<char>, start: usize) -> String {
     let mut pos = start;
-    while pos < latex.len() && latex[pos..].chars().next().unwrap().is_alphabetic() {
+    while pos < latex.len() && latex[pos].is_alphabetic() {
         pos += 1;
     }
-    &latex[start..pos]
+    latex[start..pos].iter().collect::<String>()
 }
 
 fn find_closing_match(tokens: &[TexToken], start: usize, left_token: &TexToken, right_token: &TexToken) -> isize {
@@ -135,8 +135,8 @@ fn find_closing_end_command(tokens: &[TexToken], start: usize) -> isize {
     find_closing_match(tokens, start, &BEGIN_COMMAND, &END_COMMAND)
 }
 
-fn find_closing_curly_bracket_char(latex: &str, start: usize) -> Result<usize, &'static str> {
-    assert_eq!(latex[start..].chars().next().unwrap(), '{');
+fn find_closing_curly_bracket_char(latex: &Vec<char>, start: usize) -> Result<usize, &'static str> {
+    assert_eq!(latex[start], '{');
     let mut count = 1;
     let mut pos = start + 1;
 
@@ -144,11 +144,11 @@ fn find_closing_curly_bracket_char(latex: &str, start: usize) -> Result<usize, &
         if pos >= latex.len() {
             return Err("Unmatched curly brackets");
         }
-        if pos + 1 < latex.len() && ["\\{", "\\}"].contains(&&latex[pos..pos + 2]) {
+        if pos + 1 < latex.len() && ["\\{", "\\}"].contains(&latex[pos..pos + 2].iter().collect::<String>().as_str()) {
             pos += 2;
             continue;
         }
-        match latex[pos..].chars().next().unwrap() {
+        match latex[pos] {
             '{' => count += 1,
             '}' => count -= 1,
             _ => {}
@@ -160,19 +160,20 @@ fn find_closing_curly_bracket_char(latex: &str, start: usize) -> Result<usize, &
 }
 
 pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
+    let latex: Vec<char> = latex.chars().collect();
     let mut tokens: Vec<TexToken> = Vec::new();
     let mut pos = 0;
 
     while pos < latex.len() {
-        let first_char = latex[pos..].chars().next().unwrap();
+        let first_char = latex[pos];
         let token: TexToken;
         match first_char {
             '%' => {
                 let mut new_pos = pos + 1;
-                while new_pos < latex.len() && latex[new_pos..].chars().next().unwrap() != '\n' {
+                while new_pos < latex.len() && latex[new_pos] != '\n' {
                     new_pos += 1;
                 }
-                token = TexToken::new(TexTokenType::Comment, latex[pos + 1..new_pos].to_string());
+                token = TexToken::new(TexTokenType::Comment, latex[pos + 1..new_pos].iter().collect());
                 pos = new_pos;
             }
             '{' | '}' | '_' | '^' | '&' => {
@@ -184,7 +185,7 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
                 pos += 1;
             }
             '\r' => {
-                if pos + 1 < latex.len() && latex[pos + 1..].chars().next().unwrap() == '\n' {
+                if pos + 1 < latex.len() && latex[pos + 1] == '\n' {
                     token = TexToken::new(TexTokenType::Newline, "\n".to_string());
                     pos += 2;
                 } else {
@@ -194,23 +195,23 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
             }
             ' ' => {
                 let mut new_pos = pos;
-                while new_pos < latex.len() && latex[new_pos..].chars().next().unwrap() == ' ' {
+                while new_pos < latex.len() && latex[new_pos] == ' ' {
                     new_pos += 1;
                 }
-                token = TexToken::new(TexTokenType::Space, latex[pos..new_pos].to_string());
+                token = TexToken::new(TexTokenType::Space, latex[pos..new_pos].iter().collect());
                 pos = new_pos;
             }
             '\\' => {
                 if pos + 1 >= latex.len() {
                     return Err("Expecting command name after '\\'".to_string());
                 }
-                let first_two_chars = &latex[pos..pos + 2];
-                if ["\\\\", "\\,"].contains(&first_two_chars) {
+                let first_two_chars = latex[pos..pos + 2].iter().collect::<String>();
+                if ["\\\\", "\\,"].contains(&&*first_two_chars) {
                     token = TexToken::new(TexTokenType::Control, first_two_chars.to_string());
-                } else if ["\\{", "\\}", "\\%", "\\$", "\\&", "\\#", "\\_", "\\|"].contains(&first_two_chars) {
+                } else if ["\\{", "\\}", "\\%", "\\$", "\\&", "\\#", "\\_", "\\|"].contains(&&*first_two_chars) {
                     token = TexToken::new(TexTokenType::Element, first_two_chars.to_string());
                 } else {
-                    let command = eat_command_name(latex, pos + 1);
+                    let command = eat_command_name(&latex, pos + 1);
                     token = TexToken::new(TexTokenType::Command, format!("\\{}", command));
                 }
                 pos += token.value.len();
@@ -218,10 +219,10 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
             _ => {
                 if first_char.is_digit(10) {
                     let mut new_pos = pos;
-                    while new_pos < latex.len() && latex[new_pos..].chars().next().unwrap().is_digit(10) {
+                    while new_pos < latex.len() && latex[new_pos].is_digit(10) {
                         new_pos += 1;
                     }
-                    token = TexToken::new(TexTokenType::Element, latex[pos..new_pos].to_string());
+                    token = TexToken::new(TexTokenType::Element, latex[pos..new_pos].iter().collect());
                 } else if first_char.is_alphabetic() {
                     token = TexToken::new(TexTokenType::Element, first_char.to_string());
                 } else if "+-*/='<>!.,;:?()[]|".contains(first_char) {
@@ -240,17 +241,17 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
         if token.token_type == TexTokenType::Command
             && ["\\text", "\\operatorname", "\\begin", "\\end"].contains(&token.value.as_str())
         {
-            if pos >= latex.len() || latex[pos..].chars().next().unwrap() != '{' {
-                if let Some(nn) = latex[pos..].find('{') {
+            if pos >= latex.len() || latex[pos] != '{' {
+                if let Some(nn) = latex[pos..].iter().position(|&c| c=='{') {
                     pos += nn;
                 } else {
                     return Err(format!("No content for {} command", token.value));
                 }
             }
             tokens.push(TexToken::new(TexTokenType::Control, "{".to_string()));
-            let pos_closing_bracket = find_closing_curly_bracket_char(latex, pos)?;
+            let pos_closing_bracket = find_closing_curly_bracket_char(&latex, pos)?;
             pos += 1;
-            let mut text_inside = latex[pos..pos_closing_bracket].to_string();
+            let mut text_inside: String = latex[pos..pos_closing_bracket].iter().collect();
             let chars = ['{', '}', '\\', '$', '&', '#', '_', '%'];
             for &char in &chars {
                 text_inside = text_inside.replace(&format!("\\{}", char), &char.to_string());
