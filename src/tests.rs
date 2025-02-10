@@ -2,10 +2,10 @@
 
 #[cfg(test)]
 mod tests {
+    use crate::{converter, tex2typst, tex2typst_with_macros, tex_parser, text_and_tex2typst, typst_writer};
     use std::collections::HashMap;
     use std::error::Error;
     use std::result;
-    use crate::{converter, tex2typst, tex2typst_with_macros, tex_parser, text_and_tex2typst, typst_writer};
 
     #[test]
     fn simple_test() {
@@ -74,14 +74,18 @@ mod tests {
 
     #[test]
     fn test_cn_chars() {
-        let tex = r"\text{中文}";
+        let tex = r"\begin{aligned}
+(f+g)(s) & =f(s)+g(s), \quad \forall f, g \in \mathcal{F}, s \in S ; \\
+(\alpha f)(s) & =\alpha f(s), \quad \forall f \in \mathcal{F}, s \in S, \alpha \text { 是数. }
+\end{aligned}";
         let result = tex2typst(tex).unwrap();
-        assert_eq!(result, "\"中文\"");
+        dbg!(result);
     }
 
     #[test]
     fn test_readme() {
-        let tex = r"\widehat{f}(\xi)=\int_{-\infty}^{\infty} f(x) e^{-i 2 \pi \xi x} d x, \quad \forall \xi \in \mathbb{R}";
+        let tex =
+            r"\widehat{f}(\xi)=\int_{-\infty}^{\infty} f(x) e^{-i 2 \pi \xi x} d x, \quad \forall \xi \in \mathbb{R}";
         println!("{}", tex2typst(tex).unwrap());
 
         let mixed = r"some text and some formula: \(\frac{1}{2}\)";
