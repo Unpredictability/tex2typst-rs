@@ -241,8 +241,11 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
             && ["\\text", "\\operatorname", "\\begin", "\\end"].contains(&token.value.as_str())
         {
             if pos >= latex.len() || latex[pos..].chars().next().unwrap() != '{' {
-                // return Err(format!("No content for {} command", token.value));
-                panic!("No content for {} command", token.value);
+                if let Some(nn) = latex[pos..].find('{') {
+                    pos += nn;
+                } else {
+                    return Err(format!("No content for {} command", token.value));
+                }
             }
             tokens.push(TexToken::new(TexTokenType::Control, "{".to_string()));
             let pos_closing_bracket = find_closing_curly_bracket_char(latex, pos)?;
