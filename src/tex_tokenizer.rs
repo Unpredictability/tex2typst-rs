@@ -1,4 +1,5 @@
 use crate::definitions::{TexToken, TexTokenType};
+use crate::tex_parser_utils::{SUB_SYMBOL, SUP_SYMBOL};
 
 fn eat_command_name(latex: &Vec<char>, start: usize) -> String {
     let mut pos = start;
@@ -134,5 +135,24 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
             pos = pos_closing_bracket + 1;
         }
     }
-    Ok(tokens)
+
+    Ok(pass_ignore_whitespace_before_script_mark(tokens))
+}
+
+// Remove all whitespace before or after _ or ^
+fn pass_ignore_whitespace_before_script_mark(tokens: Vec<TexToken>) -> Vec<TexToken> {
+    let is_script_mark = |token: &TexToken| token.eq(&SUB_SYMBOL) || token.eq(&SUP_SYMBOL);
+    let mut out_tokens: Vec<TexToken> = Vec::new();
+
+    for i in 0..tokens.len() {
+        if tokens[i].token_type == TexTokenType::Space && i + 1 < tokens.len() && is_script_mark(&tokens[i + 1]) {
+            continue;
+        }
+        if tokens[i].token_type == TexTokenType::Space && i > 0 && is_script_mark(&tokens[i - 1]) {
+            continue;
+        }
+        out_tokens.push(tokens[i].clone());
+    }
+
+    out_tokens
 }

@@ -7,7 +7,8 @@ mod tests;
 mod tex_parser;
 mod typst_writer;
 mod tex_tokenizer;
-mod macro_registry;
+mod command_registry;
+mod tex_parser_utils;
 
 /// Converts a given TeX string to a Typst string.
 ///

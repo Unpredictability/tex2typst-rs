@@ -1,145 +1,15 @@
 use crate::definitions::TexNodeData::{Array, Sqrt};
 use crate::definitions::{TexNode, TexNodeData, TexNodeType, TexSupsubData, TexToken, TexTokenType};
 use crate::map::get_symbol_map;
-use std::cmp::PartialEq;
-use std::sync::LazyLock;
-use crate::macro_registry::MacroRegistry;
+use crate::tex_parser_utils::*;
 use crate::tex_tokenizer;
-
-const UNARY_COMMANDS: &[&str] = &[
-    // "sqrt",
-    "text",
-    "bar",
-    "bold",
-    "boldsymbol",
-    "ddot",
-    "dot",
-    "hat",
-    "mathbb",
-    "mathbf",
-    "mathcal",
-    "mathfrak",
-    "mathit",
-    "mathrm",
-    "mathscr",
-    "mathsf",
-    "mathtt",
-    "operatorname",
-    "overbrace",
-    "overline",
-    "pmb",
-    "rm",
-    "tilde",
-    "underbrace",
-    "underline",
-    "vec",
-    "overrightarrow",
-    "widehat",
-    "widetilde",
-    "floor", // This is a custom macro
-];
-
-const OPTION_BINARY_COMMANDS: &[&str] = &["sqrt"];
-
-const BINARY_COMMANDS: &[&str] = &["frac", "tfrac", "binom", "dbinom", "dfrac", "tbinom", "overset"];
-
-static EMPTY_NODE: LazyLock<TexNode> = LazyLock::new(|| TexNode::new(TexNodeType::Empty, String::new(), None, None));
-
-fn get_command_param_num(command: &str) -> usize {
-    if UNARY_COMMANDS.contains(&command) {
-        1
-    } else if BINARY_COMMANDS.contains(&command) {
-        2
-    } else {
-        0
-    }
-}
-
-static LEFT_CURLY_BRACKET: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "{".to_string()));
-static RIGHT_CURLY_BRACKET: LazyLock<TexToken> =
-    LazyLock::new(|| TexToken::new(TexTokenType::Control, "}".to_string()));
-
-static LEFT_SQUARE_BRACKET: LazyLock<TexToken> =
-    LazyLock::new(|| TexToken::new(TexTokenType::Element, "[".to_string()));
-static RIGHT_SQUARE_BRACKET: LazyLock<TexToken> =
-    LazyLock::new(|| TexToken::new(TexTokenType::Element, "]".to_string()));
-
-fn eat_whitespaces(tokens: &[TexToken], start: usize) -> usize {
-    let mut pos = start;
-    while pos < tokens.len() && matches!(tokens[pos].token_type, TexTokenType::Space | TexTokenType::Newline) {
-        pos += 1;
-    }
-    tokens[start..pos].len()
-}
-
-fn eat_parenthesis(tokens: &[TexToken], start: usize) -> Option<&TexToken> {
-    let first_token = &tokens[start];
-    if first_token.token_type == TexTokenType::Element
-        && ["(", ")", "[", "]", "|", "\\{", "\\}", "."].contains(&first_token.value.as_str())
-    {
-        Some(first_token)
-    } else if first_token.token_type == TexTokenType::Command
-        && ["lfloor", "rfloor", "lceil", "rceil", "langle", "rangle"].contains(&&first_token.value[1..])
-    {
-        Some(first_token)
-    } else {
-        None
-    }
-}
-
-fn eat_primes(tokens: &[TexToken], start: usize) -> usize {
-    let mut pos = start;
-    while pos < tokens.len() && tokens[pos] == TexToken::new(TexTokenType::Element, "'".to_string()) {
-        pos += 1;
-    }
-    pos - start
-}
-
-fn find_closing_match(tokens: &[TexToken], start: usize, left_token: &TexToken, right_token: &TexToken) -> isize {
-    assert!(tokens[start].eq(left_token));
-    let mut count = 1;
-    let mut pos = start + 1;
-
-    while count > 0 {
-        if pos >= tokens.len() {
-            return -1;
-        }
-        if tokens[pos].eq(left_token) {
-            count += 1;
-        } else if tokens[pos].eq(right_token) {
-            count -= 1;
-        }
-        pos += 1;
-    }
-
-    (pos - 1) as isize
-}
-
-static LEFT_COMMAND: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\left".to_string()));
-static RIGHT_COMMAND: LazyLock<TexToken> =
-    LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\right".to_string()));
-
-fn find_closing_right_command(tokens: &[TexToken], start: usize) -> isize {
-    find_closing_match(tokens, start, &LEFT_COMMAND, &RIGHT_COMMAND)
-}
-
-static BEGIN_COMMAND: LazyLock<TexToken> =
-    LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\begin".to_string()));
-static END_COMMAND: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\end".to_string()));
-
-fn find_closing_end_command(tokens: &[TexToken], start: usize) -> isize {
-    find_closing_match(tokens, start, &BEGIN_COMMAND, &END_COMMAND)
-}
+use std::cmp::PartialEq;
 
 type ParseResult = Result<(TexNode, usize), String>;
-
-static SUB_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "_".to_string()));
-static SUP_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "^".to_string()));
 
 pub struct LatexParser {
     space_sensitive: bool,
     newline_sensitive: bool,
-    macro_registry: MacroRegistry,
 }
 
 impl LatexParser {
@@ -147,7 +17,6 @@ impl LatexParser {
         LatexParser {
             space_sensitive,
             newline_sensitive,
-            macro_registry: MacroRegistry::new(),
         }
     }
 
@@ -548,23 +417,7 @@ impl LatexParser {
     }
 }
 
-// Remove all whitespace before or after _ or ^
-fn pass_ignore_whitespace_before_script_mark(tokens: Vec<TexToken>) -> Vec<TexToken> {
-    let is_script_mark = |token: &TexToken| token.eq(&SUB_SYMBOL) || token.eq(&SUP_SYMBOL);
-    let mut out_tokens: Vec<TexToken> = Vec::new();
 
-    for i in 0..tokens.len() {
-        if tokens[i].token_type == TexTokenType::Space && i + 1 < tokens.len() && is_script_mark(&tokens[i + 1]) {
-            continue;
-        }
-        if tokens[i].token_type == TexTokenType::Space && i > 0 && is_script_mark(&tokens[i - 1]) {
-            continue;
-        }
-        out_tokens.push(tokens[i].clone());
-    }
-
-    out_tokens
-}
 
 fn pass_expand_custom_tex_macros(
     tokens: Vec<TexToken>,
@@ -589,12 +442,10 @@ fn pass_expand_custom_tex_macros(
 
 pub fn parse_tex(tex: &str) -> Result<TexNode, String> {
     let parser = LatexParser::new(false, false);
-    let mut tokens = tex_tokenizer::tokenize(tex)?;
-    tokens = pass_ignore_whitespace_before_script_mark(tokens);
+    let tokens = tex_tokenizer::tokenize(tex)?;
     parser.parse(tokens)
 }
 
 pub fn expand_macros(tex_tree: TexNode, macros_definition: &str) -> Result<TexNode, String> {
     todo!()
 }
-
