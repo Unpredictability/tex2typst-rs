@@ -74,10 +74,8 @@ mod tests {
 
     #[test]
     fn test_cn_chars() {
-        let tex = r"\begin{aligned}
-(f+g)(s) & =f(s)+g(s), \quad \forall f, g \in \mathcal{F}, s \in S ; \\
-(\alpha f)(s) & =\alpha f(s), \quad \forall f \in \mathcal{F}, s \in S, \alpha \text { 是数. }
-\end{aligned}";
+        let tex = r"\begin{aligned}asd \end{aligned}";
+        dbg!(tex.chars());
         let result = tex2typst(tex).unwrap();
         dbg!(result);
     }

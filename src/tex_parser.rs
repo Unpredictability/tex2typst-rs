@@ -91,7 +91,7 @@ fn eat_primes(tokens: &[TexToken], start: usize) -> usize {
     pos - start
 }
 
-fn eat_command_name(latex:&Vec<char>, start: usize) -> String {
+fn eat_command_name(latex: &Vec<char>, start: usize) -> String {
     let mut pos = start;
     while pos < latex.len() && latex[pos].is_alphabetic() {
         pos += 1;
@@ -242,7 +242,7 @@ pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
             && ["\\text", "\\operatorname", "\\begin", "\\end"].contains(&token.value.as_str())
         {
             if pos >= latex.len() || latex[pos] != '{' {
-                if let Some(nn) = latex[pos..].iter().position(|&c| c=='{') {
+                if let Some(nn) = latex[pos..].iter().position(|&c| c == '{') {
                     pos += nn;
                 } else {
                     return Err(format!("No content for {} command", token.value));
@@ -631,11 +631,14 @@ impl LatexParser {
 
     fn parse_aligned(&self, tokens: &[TexToken]) -> Result<Vec<Vec<TexNode>>, String> {
         let mut pos = 0;
-        let mut all_rows: Vec<Vec<TexNode>> = Vec::new();
-        let mut row: Vec<TexNode> = Vec::new();
-        all_rows.push(row.clone());
-        let mut group = TexNode::new(TexNodeType::Ordgroup, String::new(), Some(Vec::new()), None);
-        row.push(group.clone());
+        let mut all_rows: Vec<Vec<TexNode>> = vec![vec![TexNode::new(
+            TexNodeType::Ordgroup,
+            String::new(),
+            Some(Vec::<TexNode>::new()),
+            None,
+        )]];
+        let mut row: &mut Vec<TexNode> = &mut all_rows[0];
+        let mut group: &mut TexNode = &mut row[0];
 
         while pos < tokens.len() {
             let (res, new_pos) = self.parse_next_expr(tokens, pos)?;
@@ -651,17 +654,27 @@ impl LatexParser {
             }
 
             if res.node_type == TexNodeType::Control && res.content == "\\\\" {
-                row = Vec::new();
-                group = TexNode::new(TexNodeType::Ordgroup, String::new(), Some(Vec::new()), None);
-                row.push(group.clone());
-                all_rows.push(row.clone());
+                all_rows.push(vec![TexNode::new(
+                    TexNodeType::Ordgroup,
+                    String::new(),
+                    Some(Vec::<TexNode>::new()),
+                    None,
+                )]);
+                row = all_rows.last_mut().unwrap();
+                group = &mut row[0];
             } else if res.node_type == TexNodeType::Control && res.content == "&" {
-                group = TexNode::new(TexNodeType::Ordgroup, String::new(), Some(Vec::new()), None);
-                row.push(group.clone());
+                row.push(TexNode::new(
+                    TexNodeType::Ordgroup,
+                    String::new(),
+                    Some(Vec::new()),
+                    None,
+                ));
+                group = row.last_mut().unwrap();
             } else {
                 group.args.as_mut().unwrap().push(res);
             }
         }
+
         Ok(all_rows)
     }
 }
