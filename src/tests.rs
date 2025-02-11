@@ -74,6 +74,13 @@ mod tests {
     }
 
     #[test]
+    fn test_lacking_space() {
+        let tex = r"           x       =  \frac{a-b \pm \sqrt{b^2 - 4ac}}{2a} ";
+        let result = tex2typst(tex).unwrap();
+        assert_eq!(result, "x = (a - b plus.minus sqrt(b^2 - 4 a c))/(2 a)");
+    }
+
+    #[test]
     fn test_readme() {
         let tex =
             r"\widehat{f}(\xi)=\int_{-\infty}^{\infty} f(x) e^{-i 2 \pi \xi x} d x, \quad \forall \xi \in \mathbb{R}";

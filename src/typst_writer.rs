@@ -52,7 +52,7 @@ impl TypstWriter {
         // putting the opening '(' for a function
         no_need_space |= !self.buffer.ends_with('=') && new_str.starts_with('(');
         // putting punctuation
-        no_need_space |= new_str.starts_with(&['(', '_', '^', ',', ';', '!']);
+        no_need_space |= new_str.starts_with(&['_', '^', ',', ';', '!']);
         // putting a prime
         no_need_space |= new_str == "'";
         // continue a number
