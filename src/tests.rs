@@ -32,13 +32,7 @@ mod tests {
     }
 
     #[test]
-    fn test_something() {
-        let tex = r"Exercise 1.1.16. Let \(d_1, d_2 \geq 1\), and let \(E_1 \subset \mathbf{R}^{d_1}, E_2 \subset \mathbf{R}^{d_2}\) be Jordan measurable sets. Show that \(E_1 \times E_2 \subset \mathbf{R}^{d_1+d_2}\) is Jordan measurable, and \(m^{d_1+d_2}\left(E_1 \times E_2\right)=m^{d_1}\left(E_1\right) \times m^{d_2}\left(E_2\right)\).";
-        println!("{}", text_and_tex2typst(tex).unwrap());
-    }
-
-    #[test]
-    fn test_smth() -> Result<(), String> {
+    fn test_invalid_input() -> Result<(), String> {
         let tex = r"\[\sqrt[a]{123} \frac{a\frac{a}{b}}{b} \frac{a}{b} !@#@$#%\]";
         let typst = text_and_tex2typst(tex).unwrap_or_else(|e| format!("Error: {}", e));
         println!("{}", &typst);
@@ -51,14 +45,14 @@ mod tests {
         let mut custom_macros = HashMap::new();
         custom_macros.insert(r"\d".to_string(), r"\partial".to_string());
         let result = tex2typst_with_macros(tex, &custom_macros).unwrap_or_else(|e| format!("Error: {}", e));
-        println!("{}", result);
+        assert_eq!(result, "diff^2");
     }
 
     #[test]
     fn test_floor() {
         let tex = r"\left\lfloor \frac{a}{b} \right\rfloor \floor{\frac{a}{b}}";
         let result = tex2typst(tex).unwrap();
-        println!("{}", result);
+        assert_eq!(result, "floor(a/b) floor(a/b)");
     }
 
     #[test]
@@ -75,9 +69,8 @@ mod tests {
     #[test]
     fn test_cn_chars() {
         let tex = r"\begin{aligned}asd \end{aligned}";
-        dbg!(tex.chars());
         let result = tex2typst(tex).unwrap();
-        dbg!(result);
+        assert_eq!(result, "a s d");
     }
 
     #[test]
