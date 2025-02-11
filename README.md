@@ -1,5 +1,4 @@
 # tex2typst-rs
-A Rust library that converts TeX code to Typst code.
 
 <a href="https://crates.io/crates/tex2typst-rs">
     <img alt="Crate" src="https://img.shields.io/crates/v/tex2typst-rs"
@@ -7,6 +6,10 @@ A Rust library that converts TeX code to Typst code.
 <a href="https://docs.rs/tex2typst-rs">
     <img alt="Documentation" src="https://docs.rs/tex2typst-rs/badge.svg"
   ></a>
+
+A Rust library that converts TeX code to Typst code. 
+
+Now you can try this library online in the [WASM web app (WIP)](https://unpredictability.github.io/tex2typst-UI/)!
 
 # Aim of this project
 

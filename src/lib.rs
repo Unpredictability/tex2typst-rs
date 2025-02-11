@@ -1,5 +1,4 @@
 use regex::{Captures, Regex};
-use std::collections::HashMap;
 
 mod converter;
 mod definitions;
@@ -7,6 +6,8 @@ mod map;
 mod tests;
 mod tex_parser;
 mod typst_writer;
+mod tex_tokenizer;
+mod macro_registry;
 
 /// Converts a given TeX string to a Typst string.
 ///
@@ -37,8 +38,7 @@ mod typst_writer;
 /// println!("{}", typst_output);
 /// ```
 pub fn tex2typst(tex: &str) -> Result<String, String> {
-    let custom_macros = HashMap::new();
-    let tex_tree = tex_parser::parse_tex(tex, &custom_macros)?;
+    let tex_tree = tex_parser::parse_tex(tex)?;
     let typst_tree = converter::convert_tree(&tex_tree)?;
     let mut writer = typst_writer::TypstWriter::new();
     writer.serialize(&typst_tree)?;
@@ -46,8 +46,9 @@ pub fn tex2typst(tex: &str) -> Result<String, String> {
     Ok(typst)
 }
 
-pub fn tex2typst_with_macros(tex: &str, custom_macros: &HashMap<String, String>) -> Result<String, String> {
-    let tex_tree = tex_parser::parse_tex(tex, custom_macros)?;
+pub fn tex2typst_with_macros(tex: &str, macros_definition: &str) -> Result<String, String> {
+    let tex_tree = tex_parser::parse_tex(tex)?;
+    let tex_tree = tex_parser::expand_macros(tex_tree, macros_definition)?;
     let typst_tree = converter::convert_tree(&tex_tree)?;
     let mut writer = typst_writer::TypstWriter::new();
     writer.serialize(&typst_tree)?;

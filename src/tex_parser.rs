@@ -3,9 +3,11 @@ use crate::definitions::{TexNode, TexNodeData, TexNodeType, TexSupsubData, TexTo
 use crate::map::get_symbol_map;
 use std::cmp::PartialEq;
 use std::sync::LazyLock;
+use crate::macro_registry::MacroRegistry;
+use crate::tex_tokenizer;
 
 const UNARY_COMMANDS: &[&str] = &[
-    "sqrt",
+    // "sqrt",
     "text",
     "bar",
     "bold",
@@ -37,6 +39,8 @@ const UNARY_COMMANDS: &[&str] = &[
     "floor", // This is a custom macro
 ];
 
+const OPTION_BINARY_COMMANDS: &[&str] = &["sqrt"];
+
 const BINARY_COMMANDS: &[&str] = &["frac", "tfrac", "binom", "dbinom", "dfrac", "tbinom", "overset"];
 
 static EMPTY_NODE: LazyLock<TexNode> = LazyLock::new(|| TexNode::new(TexNodeType::Empty, String::new(), None, None));
@@ -60,12 +64,12 @@ static LEFT_SQUARE_BRACKET: LazyLock<TexToken> =
 static RIGHT_SQUARE_BRACKET: LazyLock<TexToken> =
     LazyLock::new(|| TexToken::new(TexTokenType::Element, "]".to_string()));
 
-fn eat_whitespaces(tokens: &[TexToken], start: usize) -> &[TexToken] {
+fn eat_whitespaces(tokens: &[TexToken], start: usize) -> usize {
     let mut pos = start;
     while pos < tokens.len() && matches!(tokens[pos].token_type, TexTokenType::Space | TexTokenType::Newline) {
         pos += 1;
     }
-    &tokens[start..pos]
+    tokens[start..pos].len()
 }
 
 fn eat_parenthesis(tokens: &[TexToken], start: usize) -> Option<&TexToken> {
@@ -89,14 +93,6 @@ fn eat_primes(tokens: &[TexToken], start: usize) -> usize {
         pos += 1;
     }
     pos - start
-}
-
-fn eat_command_name(latex: &Vec<char>, start: usize) -> String {
-    let mut pos = start;
-    while pos < latex.len() && latex[pos].is_alphabetic() {
-        pos += 1;
-    }
-    latex[start..pos].iter().collect::<String>()
 }
 
 fn find_closing_match(tokens: &[TexToken], start: usize, left_token: &TexToken, right_token: &TexToken) -> isize {
@@ -135,135 +131,6 @@ fn find_closing_end_command(tokens: &[TexToken], start: usize) -> isize {
     find_closing_match(tokens, start, &BEGIN_COMMAND, &END_COMMAND)
 }
 
-fn find_closing_curly_bracket_char(latex: &Vec<char>, start: usize) -> Result<usize, &'static str> {
-    assert_eq!(latex[start], '{');
-    let mut count = 1;
-    let mut pos = start + 1;
-
-    while count > 0 {
-        if pos >= latex.len() {
-            return Err("Unmatched curly brackets");
-        }
-        if pos + 1 < latex.len() && ["\\{", "\\}"].contains(&latex[pos..pos + 2].iter().collect::<String>().as_str()) {
-            pos += 2;
-            continue;
-        }
-        match latex[pos] {
-            '{' => count += 1,
-            '}' => count -= 1,
-            _ => {}
-        }
-        pos += 1;
-    }
-
-    Ok(pos - 1)
-}
-
-pub fn tokenize(latex: &str) -> Result<Vec<TexToken>, String> {
-    let latex: Vec<char> = latex.chars().collect();
-    let mut tokens: Vec<TexToken> = Vec::new();
-    let mut pos = 0;
-
-    while pos < latex.len() {
-        let first_char = latex[pos];
-        let token: TexToken;
-        match first_char {
-            '%' => {
-                let mut new_pos = pos + 1;
-                while new_pos < latex.len() && latex[new_pos] != '\n' {
-                    new_pos += 1;
-                }
-                token = TexToken::new(TexTokenType::Comment, latex[pos + 1..new_pos].iter().collect());
-                pos = new_pos;
-            }
-            '{' | '}' | '_' | '^' | '&' => {
-                token = TexToken::new(TexTokenType::Control, first_char.to_string());
-                pos += 1;
-            }
-            '\n' => {
-                token = TexToken::new(TexTokenType::Newline, first_char.to_string());
-                pos += 1;
-            }
-            '\r' => {
-                if pos + 1 < latex.len() && latex[pos + 1] == '\n' {
-                    token = TexToken::new(TexTokenType::Newline, "\n".to_string());
-                    pos += 2;
-                } else {
-                    token = TexToken::new(TexTokenType::Newline, "\n".to_string());
-                    pos += 1;
-                }
-            }
-            ' ' => {
-                let mut new_pos = pos;
-                while new_pos < latex.len() && latex[new_pos] == ' ' {
-                    new_pos += 1;
-                }
-                token = TexToken::new(TexTokenType::Space, latex[pos..new_pos].iter().collect());
-                pos = new_pos;
-            }
-            '\\' => {
-                if pos + 1 >= latex.len() {
-                    return Err("Expecting command name after '\\'".to_string());
-                }
-                let first_two_chars = latex[pos..pos + 2].iter().collect::<String>();
-                if ["\\\\", "\\,"].contains(&&*first_two_chars) {
-                    token = TexToken::new(TexTokenType::Control, first_two_chars.to_string());
-                } else if ["\\{", "\\}", "\\%", "\\$", "\\&", "\\#", "\\_", "\\|"].contains(&&*first_two_chars) {
-                    token = TexToken::new(TexTokenType::Element, first_two_chars.to_string());
-                } else {
-                    let command = eat_command_name(&latex, pos + 1);
-                    token = TexToken::new(TexTokenType::Command, format!("\\{}", command));
-                }
-                pos += token.value.len();
-            }
-            _ => {
-                if first_char.is_digit(10) {
-                    let mut new_pos = pos;
-                    while new_pos < latex.len() && latex[new_pos].is_digit(10) {
-                        new_pos += 1;
-                    }
-                    token = TexToken::new(TexTokenType::Element, latex[pos..new_pos].iter().collect());
-                } else if first_char.is_alphabetic() {
-                    token = TexToken::new(TexTokenType::Element, first_char.to_string());
-                } else if "+-*/='<>!.,;:?()[]|".contains(first_char) {
-                    token = TexToken::new(TexTokenType::Element, first_char.to_string());
-                } else if "~".contains(first_char) {
-                    token = TexToken::new(TexTokenType::NoBreakSpace, "space.nobreak".to_string());
-                } else {
-                    token = TexToken::new(TexTokenType::Unknown, first_char.to_string());
-                }
-                pos += token.value.len();
-            }
-        }
-
-        tokens.push(token.clone());
-
-        if token.token_type == TexTokenType::Command
-            && ["\\text", "\\operatorname", "\\begin", "\\end"].contains(&token.value.as_str())
-        {
-            if pos >= latex.len() || latex[pos] != '{' {
-                if let Some(nn) = latex[pos..].iter().position(|&c| c == '{') {
-                    pos += nn;
-                } else {
-                    return Err(format!("No content for {} command", token.value));
-                }
-            }
-            tokens.push(TexToken::new(TexTokenType::Control, "{".to_string()));
-            let pos_closing_bracket = find_closing_curly_bracket_char(&latex, pos)?;
-            pos += 1;
-            let mut text_inside: String = latex[pos..pos_closing_bracket].iter().collect();
-            let chars = ['{', '}', '\\', '$', '&', '#', '_', '%'];
-            for &char in &chars {
-                text_inside = text_inside.replace(&format!("\\{}", char), &char.to_string());
-            }
-            tokens.push(TexToken::new(TexTokenType::Text, text_inside));
-            tokens.push(TexToken::new(TexTokenType::Control, "}".to_string()));
-            pos = pos_closing_bracket + 1;
-        }
-    }
-    Ok(tokens)
-}
-
 type ParseResult = Result<(TexNode, usize), String>;
 
 static SUB_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "_".to_string()));
@@ -272,6 +139,7 @@ static SUP_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenT
 pub struct LatexParser {
     space_sensitive: bool,
     newline_sensitive: bool,
+    macro_registry: MacroRegistry,
 }
 
 impl LatexParser {
@@ -279,6 +147,7 @@ impl LatexParser {
         LatexParser {
             space_sensitive,
             newline_sensitive,
+            macro_registry: MacroRegistry::new(),
         }
     }
 
@@ -473,7 +342,7 @@ impl LatexParser {
         let command = &tokens[start].value; // command name starts with a \\
         let pos = start + 1;
 
-        if ["left", "right", "begin", "end"].contains(&&command[1..]) {
+        if matches!(command[1..].as_ref(), "left" | "right" | "begin" | "end") {
             panic!("Unexpected command: {}", command);
         }
 
@@ -544,7 +413,7 @@ impl LatexParser {
         assert!(tokens[start].eq(&LEFT_COMMAND));
 
         let mut pos = start + 1;
-        pos += eat_whitespaces(tokens, pos).len();
+        pos += eat_whitespaces(tokens, pos);
 
         if pos >= tokens.len() {
             return Err("Expecting delimiter after \\left".to_string());
@@ -563,7 +432,7 @@ impl LatexParser {
         let expr_inside_end = idx as usize;
         pos = expr_inside_end + 1;
 
-        pos += eat_whitespaces(tokens, pos).len();
+        pos += eat_whitespaces(tokens, pos);
         if pos >= tokens.len() {
             return Err("Expecting \\right after \\left".to_string());
         }
@@ -595,7 +464,7 @@ impl LatexParser {
         let env_name = tokens[pos + 1].value.clone();
         pos += 3;
 
-        pos += eat_whitespaces(tokens, pos).len(); // ignore whitespaces and '\n' after \begin{envName}
+        pos += eat_whitespaces(tokens, pos); // ignore whitespaces and '\n' after \begin{envName}
 
         let expr_inside_start = pos;
 
@@ -705,7 +574,7 @@ fn pass_expand_custom_tex_macros(
     for token in tokens {
         if token.token_type == TexTokenType::Command {
             if let Some(expansion) = custom_tex_macros.get(&token.value) {
-                if let Ok(expanded_tokens) = tokenize(expansion) {
+                if let Ok(expanded_tokens) = tex_tokenizer::tokenize(expansion) {
                     out_tokens.extend(expanded_tokens);
                 }
             } else {
@@ -718,10 +587,14 @@ fn pass_expand_custom_tex_macros(
     out_tokens
 }
 
-pub fn parse_tex(tex: &str, custom_tex_macros: &std::collections::HashMap<String, String>) -> Result<TexNode, String> {
+pub fn parse_tex(tex: &str) -> Result<TexNode, String> {
     let parser = LatexParser::new(false, false);
-    let mut tokens = tokenize(tex)?;
+    let mut tokens = tex_tokenizer::tokenize(tex)?;
     tokens = pass_ignore_whitespace_before_script_mark(tokens);
-    tokens = pass_expand_custom_tex_macros(tokens, custom_tex_macros);
     parser.parse(tokens)
 }
+
+pub fn expand_macros(tex_tree: TexNode, macros_definition: &str) -> Result<TexNode, String> {
+    todo!()
+}
+

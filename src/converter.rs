@@ -11,8 +11,18 @@ const TYPST_INTRINSIC_SYMBOLS: &[&str] = &[
 pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
     match node.node_type {
         TexNodeType::Empty => Ok(TypstNode::new(TypstNodeType::Empty, String::from(""), None, None)),
-        TexNodeType::Whitespace => Ok(TypstNode::new(TypstNodeType::Whitespace, node.content.clone(), None, None)),
-        TexNodeType::NoBreakSpace => Ok(TypstNode::new(TypstNodeType::NoBreakSpace, node.content.clone(), None, None)),
+        TexNodeType::Whitespace => Ok(TypstNode::new(
+            TypstNodeType::Whitespace,
+            node.content.clone(),
+            None,
+            None,
+        )),
+        TexNodeType::NoBreakSpace => Ok(TypstNode::new(
+            TypstNodeType::NoBreakSpace,
+            node.content.clone(),
+            None,
+            None,
+        )),
         TexNodeType::Ordgroup => Ok(TypstNode::new(
             TypstNodeType::Group,
             String::from(""),
@@ -26,8 +36,18 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
             ),
             None,
         )),
-        TexNodeType::Element => Ok(TypstNode::new(TypstNodeType::Atom, convert_token(&node.content), None, None)),
-        TexNodeType::Symbol => Ok(TypstNode::new(TypstNodeType::Symbol, convert_token(&node.content), None, None)),
+        TexNodeType::Element => Ok(TypstNode::new(
+            TypstNodeType::Atom,
+            convert_token(&node.content),
+            None,
+            None,
+        )),
+        TexNodeType::Symbol => Ok(TypstNode::new(
+            TypstNodeType::Symbol,
+            convert_token(&node.content),
+            None,
+            None,
+        )),
         TexNodeType::Text => Ok(TypstNode::new(TypstNodeType::Text, node.content.clone(), None, None)),
         TexNodeType::Comment => Ok(TypstNode::new(TypstNodeType::Comment, node.content.clone(), None, None)),
         TexNodeType::SupSub => {
@@ -91,7 +111,11 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
             let mut group = TypstNode::new(
                 TypstNodeType::Group,
                 "".to_string(),
-                Some(args.iter().map(|arg| convert_tree(arg)).collect::<Result<Vec<_>, String>>()?),
+                Some(
+                    args.iter()
+                        .map(|arg| convert_tree(arg))
+                        .collect::<Result<Vec<_>, String>>()?,
+                ),
                 None,
             );
             if matches!(
@@ -103,7 +127,7 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
                     | ("\\lceil", "\\rceil")
                     | ("\\lfloor", "\\rceil")
             ) {
-                return Ok( group);
+                return Ok(group);
             }
 
             if right.content == "." {
@@ -111,9 +135,22 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
                 return Ok(group);
             } else if left.content == "." {
                 group.args.as_mut().unwrap().remove(0);
-                return Ok(TypstNode::new(TypstNodeType::FuncCall, "lr".to_string(), Some(vec![group]), None));
+                return Ok(TypstNode::new(
+                    TypstNodeType::FuncCall,
+                    "lr".to_string(),
+                    Some(vec![group]),
+                    None,
+                ));
             }
-            Ok(TypstNode::new(TypstNodeType::FuncCall, "lr".to_string(), Some(vec![group]), None))
+            Ok(TypstNode::new(
+                TypstNodeType::FuncCall,
+                "lr".to_string(),
+                Some(vec![group]),
+                None,
+            ))
+        }
+        TexNodeType::OptionBinaryFunc => {
+            todo!()
         }
         TexNodeType::BinaryFunc => {
             if node.content == "\\overset" {
@@ -125,7 +162,12 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
                 let args = node.args.as_ref().unwrap();
                 let num = convert_tree(&args[0])?;
                 let den = convert_tree(&args[1])?;
-                return Ok(TypstNode::new(TypstNodeType::Fraction, "".to_string(), Some(vec![num, den]), None));
+                return Ok(TypstNode::new(
+                    TypstNodeType::Fraction,
+                    "".to_string(),
+                    Some(vec![num, den]),
+                    None,
+                ));
             }
 
             Ok(TypstNode::new(
@@ -158,18 +200,31 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
             }
             if node.content == "\\mathbf" {
                 let inner = TypstNode::new(TypstNodeType::FuncCall, "bold".to_string(), Some(vec![arg0]), None);
-                return Ok(TypstNode::new(TypstNodeType::FuncCall, "upright".to_string(), Some(vec![inner]), None));
+                return Ok(TypstNode::new(
+                    TypstNodeType::FuncCall,
+                    "upright".to_string(),
+                    Some(vec![inner]),
+                    None,
+                ));
             }
             if node.content == "\\mathbb"
                 && arg0.node_type == TypstNodeType::Atom
                 && arg0.content.chars().all(|c| c.is_ascii_uppercase())
             {
-                return Ok(TypstNode::new(TypstNodeType::Symbol, arg0.content.repeat(2), None, None));
+                return Ok(TypstNode::new(
+                    TypstNodeType::Symbol,
+                    arg0.content.repeat(2),
+                    None,
+                    None,
+                ));
             }
             if node.content == "\\operatorname" {
                 let body = node.args.as_ref().unwrap();
                 if body.len() != 1 || body[0].node_type != TexNodeType::Text {
-                    return Err(format!("Expecting body of \\operatorname to be text but got {:?}", node));
+                    return Err(format!(
+                        "Expecting body of \\operatorname to be text but got {:?}",
+                        node
+                    ));
                 }
                 let text = &body[0].content;
                 return if TYPST_INTRINSIC_SYMBOLS.contains(&text.as_str()) {
@@ -223,7 +278,12 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
                 Ok(res)
             }
         }
-        TexNodeType::UnknownMacro => Ok(TypstNode::new(TypstNodeType::Unknown, convert_token(&node.content), None, None)),
+        TexNodeType::UnknownMacro => Ok(TypstNode::new(
+            TypstNodeType::Unknown,
+            convert_token(&node.content),
+            None,
+            None,
+        )),
         TexNodeType::Control => {
             if node.content == "\\\\" {
                 Ok(TypstNode::new(TypstNodeType::Symbol, "\\".to_string(), None, None))
@@ -233,7 +293,12 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
                 return Err(format!("Unknown control sequence: {:?}", node));
             }
         }
-        TexNodeType::Unknown => Ok(TypstNode::new(TypstNodeType::Unknown, convert_token(&node.content), None, None)),
+        TexNodeType::Unknown => Ok(TypstNode::new(
+            TypstNodeType::Unknown,
+            convert_token(&node.content),
+            None,
+            None,
+        )),
     }
 }
 

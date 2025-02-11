@@ -6,6 +6,7 @@ mod tests {
     use std::collections::HashMap;
     use std::error::Error;
     use std::result;
+    use crate::tex_parser::parse_tex;
 
     #[test]
     fn simple_test() {
@@ -33,19 +34,10 @@ mod tests {
 
     #[test]
     fn test_invalid_input() -> Result<(), String> {
-        let tex = r"\[\sqrt[a]{123} \frac{a\frac{a}{b}}{b} \frac{a}{b} !@#@$#%\]";
+        let tex = r"\[ \\ \ } {\sqrt[a]{123} \frac{a\frac{a}{b}}{b} \frac{a}{b} !@#@$#%\]";
         let typst = text_and_tex2typst(tex).unwrap_or_else(|e| format!("Error: {}", e));
-        println!("{}", &typst);
+        assert!(typst.contains("Error"));
         Ok(())
-    }
-
-    #[test]
-    fn test_macros() {
-        let tex = r"\d^2";
-        let mut custom_macros = HashMap::new();
-        custom_macros.insert(r"\d".to_string(), r"\partial".to_string());
-        let result = tex2typst_with_macros(tex, &custom_macros).unwrap_or_else(|e| format!("Error: {}", e));
-        assert_eq!(result, "diff^2");
     }
 
     #[test]
@@ -78,6 +70,28 @@ mod tests {
         let tex = r"           x       =  \frac{a-b \pm \sqrt{b^2 - 4ac}}{2a} ";
         let result = tex2typst(tex).unwrap();
         assert_eq!(result, "x = (a - b plus.minus sqrt(b^2 - 4 a c))/(2 a)");
+    }
+
+    #[test]
+    fn test_optional_args() {
+        let tex = r"\pp[f]{x} \sqrt[3]{x} \frac{a}{b}";
+        let result = parse_tex(tex).unwrap();
+        dbg!(result);
+    }
+
+    #[test]
+    fn test_sqrt() {
+        let tex = r"\sqrt{3} \sqrt[3]{x}";
+        let result = tex2typst(tex).unwrap();
+        assert_eq!(result, "sqrt(3) root(3, x)");
+    }
+
+    // #[test]
+    fn test_macros() {
+        let tex = r"\d^2";
+        let custom_macros = r"\newcommand{\d}{\partial}".to_string();
+        let result = tex2typst_with_macros(tex, &custom_macros).unwrap_or_else(|e| format!("Error: {}", e));
+        assert_eq!(result, "diff^2");
     }
 
     #[test]

@@ -45,6 +45,7 @@ pub(crate) enum TexNodeType {
     SupSub,
     UnaryFunc,
     BinaryFunc,
+    OptionBinaryFunc,
     Leftright,
     BeginEnd,
     Symbol,
