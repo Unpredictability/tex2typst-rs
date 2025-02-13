@@ -1,4 +1,4 @@
-use crate::command_registry::CustomMacros;
+use crate::command_registry::CustomMacro;
 use crate::command_registry::{CommandRegistry, CommandType};
 use crate::definitions::TexNodeData::{Array, Sqrt};
 use crate::definitions::{TexNode, TexNodeData, TexNodeType, TexSupsubData, TexToken, TexTokenType};

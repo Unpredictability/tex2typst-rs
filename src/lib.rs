@@ -1,15 +1,15 @@
-use regex::{Captures, Regex};
 use crate::tex_parser::LatexParser;
+use regex::{Captures, Regex};
 
+mod command_registry;
 mod converter;
 mod definitions;
 mod map;
 mod tests;
 mod tex_parser;
-mod typst_writer;
-mod tex_tokenizer;
-mod command_registry;
 mod tex_parser_utils;
+mod tex_tokenizer;
+mod typst_writer;
 
 /// Converts a given TeX string to a Typst string.
 ///
