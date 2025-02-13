@@ -67,7 +67,6 @@ pub(crate) struct TexNode {
 
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) enum TexNodeData {
-    Sqrt(TexNode),
     Supsub(TexSupsubData),
     Array(TexArrayData),
 }
