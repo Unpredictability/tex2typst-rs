@@ -1,3 +1,4 @@
+use crate::command_registry::CustomMacros;
 use crate::command_registry::{CommandRegistry, CommandType};
 use crate::definitions::TexNodeData::{Array, Sqrt};
 use crate::definitions::{TexNode, TexNodeData, TexNodeType, TexSupsubData, TexToken, TexTokenType};
@@ -215,7 +216,7 @@ impl LatexParser {
         let pos = start + 1;
 
         if matches!(command[1..].as_ref(), "left" | "right" | "begin" | "end") {
-            panic!("Unexpected command: {}", command);
+            return Err(format!("Unexpected command: {}", command));
         }
 
         match self.command_registry.get_command_type(&command[1..]) {
@@ -234,7 +235,7 @@ impl LatexParser {
                 }
                 if command == "\\text" {
                     if pos + 2 >= tokens.len() {
-                        panic!("Expecting content for \\text command");
+                        return Err("Expecting content for \\text command".to_string());
                     }
                     assert_eq!(tokens[pos], *LEFT_CURLY_BRACKET);
                     assert_eq!(tokens[pos + 1].token_type, TexTokenType::Text);
@@ -282,9 +283,6 @@ impl LatexParser {
                     TexNode::new(TexNodeType::OptionBinaryFunc, command.clone(), Some(args), None),
                     new_pos,
                 ))
-            }
-            Some(CommandType::CustomMacro) => {
-                todo!("Custom macros are not supported yet");
             }
             _ => Err("Invalid number of parameters".to_string()),
         }
@@ -450,7 +448,7 @@ fn pass_expand_custom_tex_macros(
     out_tokens
 }
 
-pub fn parse_tex(tex: &str, macros_definition: &str) -> Result<TexNode, String> {
+pub fn parse_tex(tex: &str) -> Result<TexNode, String> {
     let parser = LatexParser::new(false, false);
     let tokens = tex_tokenizer::tokenize(tex)?;
     parser.parse(tokens)

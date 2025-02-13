@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn test_text_with_space() {
-        let tex = r"\text {some text}";
+        let tex = r"\text        {some text}";
         let result = tex2typst(tex).unwrap();
         assert_eq!(result, "\"some text\"");
 
@@ -82,7 +82,7 @@ mod tests {
     #[test]
     fn test_sqrt() {
         let tex = r"\sqrt{3} \sqrt[3]{x}";
-        let tex_node = tex_parser::parse_tex(tex).unwrap();
+        let tex_node = parse_tex(tex).unwrap();
         dbg!(&tex_node);
         let result = tex2typst(tex).unwrap();
         assert_eq!(result, "sqrt(3) root(3, x)");
