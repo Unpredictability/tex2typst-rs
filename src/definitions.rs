@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+// Control: {, }, _, ^, &, \
+// Element: [, ],
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) enum TexTokenType {
     Element,

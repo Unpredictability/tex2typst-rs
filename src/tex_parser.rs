@@ -232,27 +232,7 @@ impl LatexParser {
                 if pos >= tokens.len() {
                     return Err(format!("Expecting argument for {}", command));
                 }
-                if command == "\\sqrt" && pos < tokens.len() && tokens[pos] == *LEFT_SQUARE_BRACKET {
-                    let pos_left_square_bracket = pos;
-                    let pos_right_square_bracket =
-                        find_closing_match(tokens, pos, &LEFT_SQUARE_BRACKET, &RIGHT_SQUARE_BRACKET);
-                    if pos_right_square_bracket == -1 {
-                        return Err("No matching right square bracket for [".to_string());
-                    }
-                    let expr_inside = &tokens[pos_left_square_bracket + 1..pos_right_square_bracket as usize];
-                    let exponent = self.parse(expr_inside.to_vec())?;
-                    let (arg1, new_pos) =
-                        self.parse_next_expr_without_supsub(tokens, pos_right_square_bracket as usize + 1)?;
-                    return Ok((
-                        TexNode::new(
-                            TexNodeType::UnaryFunc,
-                            command.clone(),
-                            Some(vec![arg1]),
-                            Some(Box::from(Sqrt(exponent))),
-                        ),
-                        new_pos,
-                    ));
-                } else if command == "\\text" {
+                if command == "\\text" {
                     if pos + 2 >= tokens.len() {
                         panic!("Expecting content for \\text command");
                     }
@@ -277,7 +257,31 @@ impl LatexParser {
                 ))
             }
             Some(CommandType::OptionalBinary) => {
-                todo!("Optional binary commands are not supported yet");
+                let mut args = vec![];
+                let mut new_pos = pos;
+                if tokens[pos].token_type == TexTokenType::Element && tokens[pos].value == "[" {
+                    let pos_left_square_bracket = pos;
+                    let pos_right_square_bracket =
+                        find_closing_match(tokens, pos, &LEFT_SQUARE_BRACKET, &RIGHT_SQUARE_BRACKET);
+                    if pos_right_square_bracket == -1 {
+                        return Err("No matching right square bracket for [".to_string());
+                    }
+                    let optional_arg_inside = &tokens[pos_left_square_bracket + 1..pos_right_square_bracket as usize];
+                    let optional_arg_node = self.parse(optional_arg_inside.to_vec())?;
+                    let (mandatory_arg_node, _new_pos) =
+                        self.parse_next_expr_without_supsub(tokens, pos_right_square_bracket as usize + 1)?;
+                    args.push(optional_arg_node);
+                    args.push(mandatory_arg_node);
+                    new_pos = _new_pos;
+                } else {
+                    let (arg1, _new_pos) = self.parse_next_expr_without_supsub(tokens, pos)?;
+                    args.push(arg1);
+                    new_pos = _new_pos;
+                }
+                Ok((
+                    TexNode::new(TexNodeType::OptionBinaryFunc, command.clone(), Some(args), None),
+                    new_pos,
+                ))
             }
             Some(CommandType::CustomMacro) => {
                 todo!("Custom macros are not supported yet");

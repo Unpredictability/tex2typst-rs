@@ -1,5 +1,5 @@
-pub const UNARY_COMMANDS: &[&str] = &[
-    "sqrt",
+pub const UNARY_COMMANDS: &[&'static str] = &[
+    // "sqrt",
     "text",
     "bar",
     "bold",
@@ -31,9 +31,9 @@ pub const UNARY_COMMANDS: &[&str] = &[
     "floor", // This is a custom macro
 ];
 
-pub const OPTION_BINARY_COMMANDS: &[&str] = &["sqrt"];
+pub const OPTION_BINARY_COMMANDS: &[&'static str] = &["sqrt"];
 
-pub const BINARY_COMMANDS: &[&str] = &["frac", "tfrac", "binom", "dbinom", "dfrac", "tbinom", "overset"];
+pub const BINARY_COMMANDS: &[&'static str] = &["frac", "tfrac", "binom", "dbinom", "dfrac", "tbinom", "overset"];
 
 pub enum CommandType {
     Symbol,

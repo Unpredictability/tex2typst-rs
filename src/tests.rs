@@ -82,6 +82,8 @@ mod tests {
     #[test]
     fn test_sqrt() {
         let tex = r"\sqrt{3} \sqrt[3]{x}";
+        let tex_node = tex_parser::parse_tex(tex).unwrap();
+        dbg!(&tex_node);
         let result = tex2typst(tex).unwrap();
         assert_eq!(result, "sqrt(3) root(3, x)");
     }

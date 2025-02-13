@@ -150,7 +150,35 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
             ))
         }
         TexNodeType::OptionBinaryFunc => {
-            todo!()
+            if node.content == "\\sqrt" {
+                match node.args.as_ref().unwrap().len() {
+                    1 => {
+                        let mandatory_arg = convert_tree(&node.args.as_ref().unwrap()[0])?;
+                        Ok(TypstNode::new(
+                            TypstNodeType::FuncCall,
+                            "sqrt".to_string(),
+                            Some(vec![mandatory_arg]),
+                            None,
+                        ))
+                    }
+                    2 => {
+                        let optional_arg = convert_tree(&node.args.as_ref().unwrap()[0])?;
+                        let mandatory_arg = convert_tree(&node.args.as_ref().unwrap()[1])?;
+                        Ok(TypstNode::new(
+                            TypstNodeType::FuncCall,
+                            "root".to_string(),
+                            Some(vec![optional_arg, mandatory_arg]),
+                            None,
+                        ))
+                    }
+                    _ => Err(format!(
+                        "Invalid number of arguments for \\sqrt: {}",
+                        node.args.as_ref().unwrap().len()
+                    )),
+                }
+            } else {
+                Err(format!("Unknown option binary function: {}", node.content))
+            }
         }
         TexNodeType::BinaryFunc => {
             if node.content == "\\overset" {
@@ -186,18 +214,6 @@ pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
         }
         TexNodeType::UnaryFunc => {
             let arg0 = convert_tree(&node.args.as_ref().unwrap()[0])?;
-            if node.content == "\\sqrt" && node.data.is_some() {
-                let TexNodeData::Sqrt(sqrt_data) = node.data.as_ref().unwrap().as_ref() else {
-                    panic!()
-                };
-                let data = convert_tree(sqrt_data)?;
-                return Ok(TypstNode::new(
-                    TypstNodeType::FuncCall,
-                    "root".to_string(),
-                    Some(vec![data, arg0]),
-                    None,
-                ));
-            }
             if node.content == "\\mathbf" {
                 let inner = TypstNode::new(TypstNodeType::FuncCall, "bold".to_string(), Some(vec![arg0]), None);
                 return Ok(TypstNode::new(
