@@ -1,6 +1,7 @@
+use crate::command_registry::{CommandRegistry, CommandType};
 use crate::definitions::TexNodeData::{Array, Sqrt};
 use crate::definitions::{TexNode, TexNodeData, TexNodeType, TexSupsubData, TexToken, TexTokenType};
-use crate::map::get_symbol_map;
+use crate::map::SYMBOL_MAP;
 use crate::tex_parser_utils::*;
 use crate::tex_tokenizer;
 use std::cmp::PartialEq;
@@ -10,6 +11,7 @@ type ParseResult = Result<(TexNode, usize), String>;
 pub struct LatexParser {
     space_sensitive: bool,
     newline_sensitive: bool,
+    command_registry: CommandRegistry,
 }
 
 impl LatexParser {
@@ -17,6 +19,7 @@ impl LatexParser {
         LatexParser {
             space_sensitive,
             newline_sensitive,
+            command_registry: CommandRegistry::new(),
         }
     }
 
@@ -215,10 +218,9 @@ impl LatexParser {
             panic!("Unexpected command: {}", command);
         }
 
-        let param_num = get_command_param_num(&command[1..]);
-        match param_num {
-            0 => {
-                if !get_symbol_map().contains_key(&command[1..]) {
+        match self.command_registry.get_command_type(&command[1..]) {
+            Some(CommandType::Symbol) => {
+                if !SYMBOL_MAP.contains_key(&command[1..]) {
                     return Ok((
                         TexNode::new(TexNodeType::UnknownMacro, command.clone(), None, None),
                         pos,
@@ -226,7 +228,7 @@ impl LatexParser {
                 }
                 Ok((TexNode::new(TexNodeType::Symbol, command.clone(), None, None), pos))
             }
-            1 => {
+            Some(CommandType::Unary) => {
                 if pos >= tokens.len() {
                     return Err(format!("Expecting argument for {}", command));
                 }
@@ -266,13 +268,19 @@ impl LatexParser {
                     new_pos,
                 ))
             }
-            2 => {
+            Some(CommandType::Binary) => {
                 let (arg1, pos1) = self.parse_next_expr_without_supsub(tokens, pos)?;
                 let (arg2, pos2) = self.parse_next_expr_without_supsub(tokens, pos1)?;
                 Ok((
                     TexNode::new(TexNodeType::BinaryFunc, command.clone(), Some(vec![arg1, arg2]), None),
                     pos2,
                 ))
+            }
+            Some(CommandType::OptionalBinary) => {
+                todo!("Optional binary commands are not supported yet");
+            }
+            Some(CommandType::CustomMacro) => {
+                todo!("Custom macros are not supported yet");
             }
             _ => Err("Invalid number of parameters".to_string()),
         }
@@ -416,8 +424,6 @@ impl LatexParser {
         Ok(all_rows)
     }
 }
-
-
 
 fn pass_expand_custom_tex_macros(
     tokens: Vec<TexToken>,

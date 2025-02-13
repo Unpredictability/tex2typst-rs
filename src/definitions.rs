@@ -59,8 +59,8 @@ pub(crate) enum TexNodeType {
 pub(crate) struct TexNode {
     pub(crate) node_type: TexNodeType,
     pub(crate) content: String,
-    pub(crate) args: Option<Vec<TexNode>>,
-    pub(crate) data: Option<Box<TexNodeData>>,
+    pub(crate) args: Option<Vec<TexNode>>,   // when node_type is Command, args is the parameters
+    pub(crate) data: Option<Box<TexNodeData>>,  // for stuff like begin-end, array, etc.
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -1,5 +1,5 @@
 use crate::definitions::{TexNode, TexNodeData, TexNodeType, TypstNode, TypstNodeData, TypstNodeType, TypstSupsubData};
-use crate::map::get_symbol_map;
+use crate::map::SYMBOL_MAP;
 use std::collections::HashMap;
 
 // Symbols that are supported by Typst but not by KaTeX
@@ -316,7 +316,7 @@ fn convert_token(token: &str) -> String {
         token.to_string()
     } else if token.starts_with('\\') {
         let symbol = &token[1..];
-        if let Some(mapped_symbol) = get_symbol_map().get(symbol) {
+        if let Some(mapped_symbol) = SYMBOL_MAP.get(symbol) {
             mapped_symbol.to_string()
         } else {
             // Fall back to the original macro.

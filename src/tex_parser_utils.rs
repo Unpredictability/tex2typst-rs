@@ -1,56 +1,11 @@
-use std::sync::LazyLock;
 use crate::definitions::{TexNode, TexNodeType, TexToken, TexTokenType};
+use std::sync::LazyLock;
 
-pub const UNARY_COMMANDS: &[&str] = &[
-    "sqrt",
-    "text",
-    "bar",
-    "bold",
-    "boldsymbol",
-    "ddot",
-    "dot",
-    "hat",
-    "mathbb",
-    "mathbf",
-    "mathcal",
-    "mathfrak",
-    "mathit",
-    "mathrm",
-    "mathscr",
-    "mathsf",
-    "mathtt",
-    "operatorname",
-    "overbrace",
-    "overline",
-    "pmb",
-    "rm",
-    "tilde",
-    "underbrace",
-    "underline",
-    "vec",
-    "overrightarrow",
-    "widehat",
-    "widetilde",
-    "floor", // This is a custom macro
-];
+pub static EMPTY_NODE: LazyLock<TexNode> =
+    LazyLock::new(|| TexNode::new(TexNodeType::Empty, String::new(), None, None));
 
-pub const OPTION_BINARY_COMMANDS: &[&str] = &["sqrt"];
-
-pub const BINARY_COMMANDS: &[&str] = &["frac", "tfrac", "binom", "dbinom", "dfrac", "tbinom", "overset"];
-
-pub static EMPTY_NODE: LazyLock<TexNode> = LazyLock::new(|| TexNode::new(TexNodeType::Empty, String::new(), None, None));
-
-pub fn get_command_param_num(command: &str) -> usize {
-    if UNARY_COMMANDS.contains(&command) {
-        1
-    } else if BINARY_COMMANDS.contains(&command) {
-        2
-    } else {
-        0
-    }
-}
-
-pub static LEFT_CURLY_BRACKET: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "{".to_string()));
+pub static LEFT_CURLY_BRACKET: LazyLock<TexToken> =
+    LazyLock::new(|| TexToken::new(TexTokenType::Control, "{".to_string()));
 pub static RIGHT_CURLY_BRACKET: LazyLock<TexToken> =
     LazyLock::new(|| TexToken::new(TexTokenType::Control, "}".to_string()));
 
@@ -110,7 +65,8 @@ pub fn find_closing_match(tokens: &[TexToken], start: usize, left_token: &TexTok
     (pos - 1) as isize
 }
 
-pub static LEFT_COMMAND: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\left".to_string()));
+pub static LEFT_COMMAND: LazyLock<TexToken> =
+    LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\left".to_string()));
 pub static RIGHT_COMMAND: LazyLock<TexToken> =
     LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\right".to_string()));
 
@@ -120,12 +76,12 @@ pub fn find_closing_right_command(tokens: &[TexToken], start: usize) -> isize {
 
 pub static BEGIN_COMMAND: LazyLock<TexToken> =
     LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\begin".to_string()));
-pub static END_COMMAND: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\end".to_string()));
+pub static END_COMMAND: LazyLock<TexToken> =
+    LazyLock::new(|| TexToken::new(TexTokenType::Command, "\\end".to_string()));
 
 pub fn find_closing_end_command(tokens: &[TexToken], start: usize) -> isize {
     find_closing_match(tokens, start, &BEGIN_COMMAND, &END_COMMAND)
 }
-
 
 pub static SUB_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "_".to_string()));
 pub static SUP_SYMBOL: LazyLock<TexToken> = LazyLock::new(|| TexToken::new(TexTokenType::Control, "^".to_string()));

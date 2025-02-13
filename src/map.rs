@@ -1,1086 +1,890 @@
-use std::collections::HashMap;
-use std::sync::OnceLock;
+use phf::phf_map;
 
-//noinspection ALL
-pub fn get_symbol_map() -> &'static HashMap<&'static str, &'static str> {
-    static SYMBOL_MAP: OnceLock<HashMap<&str, &str>> = OnceLock::new();
-    SYMBOL_MAP.get_or_init(|| {
-        let mut symbol_map = HashMap::new();
-        symbol_map.insert("nonumber", "");
-        symbol_map.insert("vec", "arrow");
-        symbol_map.insert("overrightarrow", "arrow");
-        symbol_map.insert("dot", "dot");
-        symbol_map.insert("ddot", "dot.double");
-        symbol_map.insert("doteq", "dot(eq)");
-        symbol_map.insert("dots", "dots.h");
-        symbol_map.insert("widehat", "hat"); // Ideally, the result of \widehat should be longer than \hat. But it is not implemented now.
-        symbol_map.insert("widetilde", "tilde"); // Ideally, the result of \widetilde should be longer than \tilde. But it is not implemented now.
-        symbol_map.insert("quad", "quad");
-        symbol_map.insert("qquad", "wide");
-        symbol_map.insert("overbrace", "overbrace"); // same
-        symbol_map.insert("underbrace", "underbrace"); // same
-        symbol_map.insert("overline", "overline"); // same
-        symbol_map.insert("underline", "underline"); // same
-        symbol_map.insert("bar", "macron");
-        symbol_map.insert("dbinom", "binom");
-        symbol_map.insert("tbinom", "binom");
-        symbol_map.insert("dfrac", "frac");
-        symbol_map.insert("tfrac", "frac");
+pub static SYMBOL_MAP: phf::Map<&'static str, &'static str> = phf_map! {
+        "nonumber" => "",
+        "vec" => "arrow",
+        "overrightarrow" => "arrow",
+        "dot" => "dot",
+        "ddot" => "dot.double",
+        "doteq" => "dot(eq)",
+        "dots" => "dots.h",
+        "widehat" => "hat", // Ideally, the result of \widehat should be longer than \hat. But it is not implemented now.
+        "widetilde" => "tilde", // Ideally, the result of \widetilde should be longer than \tilde. But it is not implemented now.
+        "quad" => "quad",
+        "qquad" => "wide",
+        "overbrace" => "overbrace", // same
+        "underbrace" => "underbrace", // same
+        "overline" => "overline", // same
+        "underline" => "underline", // same
+        "bar" => "macron",
+        "dbinom" => "binom",
+        "tbinom" => "binom",
+        "dfrac" => "frac",
+        "tfrac" => "frac",
 
-        symbol_map.insert("operatorname", "op");
+        "operatorname" => "op",
 
-        symbol_map.insert("boldsymbol", "bold");
-        symbol_map.insert("mathbb", "bb");
-        symbol_map.insert("mathbf", "bold");
-        symbol_map.insert("mathcal", "cal");
-        symbol_map.insert("mathit", "italic");
-        symbol_map.insert("mathfrak", "frak");
-        symbol_map.insert("mathrm", "upright");
-        symbol_map.insert("mathsf", "sans");
-        symbol_map.insert("mathtt", "mono");
+        "boldsymbol" => "bold",
+        "mathbb" => "bb",
+        "mathbf" => "bold",
+        "mathcal" => "cal",
+        "mathit" => "italic",
+        "mathfrak" => "frak",
+        "mathrm" => "upright",
+        "mathsf" => "sans",
+        "mathtt" => "mono",
 
-        symbol_map.insert("rm", "upright");
+        "rm" => "upright",
 
-        // TODO: \pmb need special logic to handle but it is not implemented now. See the commented test case.
-        symbol_map.insert("pmb", "bold");
-
-        /* variants of plus,minus,times,divide */
-        symbol_map.insert("pm", "plus.minus");
-        symbol_map.insert("mp", "minus.plus");
-        symbol_map.insert("boxplus", "plus.square");
-        symbol_map.insert("otimes", "times.circle");
-        symbol_map.insert("boxtimes", "times.square");
+        "pmb" => "bold",
 
         /* wave */
         // tex: \sim \approx \cong \simeq \asymp \equiv \propto
         // typst: tilde.op approx tilde.equiv tilde.eq ≍ equiv prop
-        symbol_map.insert("approx", "approx");
-        symbol_map.insert("cong", "tilde.equiv");
-        symbol_map.insert("simeq", "tilde.eq");
-        symbol_map.insert("asymp", "≍"); // just use the Unicode character :-)
-        symbol_map.insert("equiv", "equiv");
-        symbol_map.insert("propto", "prop");
+        "asymp" => "≍", // just use the Unicode character :-)
 
         /* arrows */
-        symbol_map.insert("gets", "arrow.l");
-        symbol_map.insert("hookleftarrow", "arrow.l.hook");
-        symbol_map.insert("leftharpoonup", "harpoon.lt");
-        symbol_map.insert("leftharpoondown", "harpoon.lb");
-        symbol_map.insert("rightleftharpoons", "harpoons.rtlb");
-        symbol_map.insert("longleftarrow", "arrow.l.long");
-        symbol_map.insert("longrightarrow", "arrow.r.long");
-        symbol_map.insert("longleftrightarrow", "arrow.l.r.long");
-        symbol_map.insert("Longleftarrow", "arrow.l.double.long");
-        symbol_map.insert("Longrightarrow", "arrow.r.double.long");
-        symbol_map.insert("Longleftrightarrow", "arrow.l.r.double.long");
-        // symbol_map.insert("longmapsto", "arrow.r.bar");
-        symbol_map.insert("hookrightarrow", "arrow.r.hook");
-        symbol_map.insert("rightharpoonup", "harpoon.rt");
-        symbol_map.insert("rightharpoondown", "harpoon.rb");
-        symbol_map.insert("iff", "arrow.l.r.double.long");
-        symbol_map.insert("implies", "arrow.r.double.long");
-        symbol_map.insert("uparrow", "arrow.t");
-        symbol_map.insert("downarrow", "arrow.b");
-        symbol_map.insert("updownarrow", "arrow.t.b");
-        symbol_map.insert("Uparrow", "arrow.t.double");
-        symbol_map.insert("Downarrow", "arrow.b.double");
-        symbol_map.insert("Updownarrow", "arrow.t.b.double");
-        symbol_map.insert("nearrow", "arrow.tr");
-        symbol_map.insert("searrow", "arrow.br");
-        symbol_map.insert("swarrow", "arrow.bl");
-        symbol_map.insert("nwarrow", "arrow.tl");
-        symbol_map.insert("leadsto", "arrow.squiggly");
+        "gets" => "arrow.l",
+        "leftharpoonup" => "harpoon.lt",
+        "iff" => "arrow.l.r.double.long",
+        "implies" => "arrow.r.double.long",
 
-        symbol_map.insert("leftleftarrows", "arrows.ll");
-        symbol_map.insert("rightrightarrows", "arrows.rr");
+        "Delta" => "Delta",
+        "Gamma" => "Gamma",
+        "Lambda" => "Lambda",
+        "Omega" => "Omega",
+        "P" => "pilcrow",
+        "Phi" => "Phi",
+        "Pi" => "Pi",
+        "Psi" => "Psi",
+        "S" => "section",
+        "Sigma" => "Sigma",
+        "Theta" => "Theta",
+        "aleph" => "alef",
+        "alpha" => "alpha",
+        "amalg" => "product.co",
+        "approx" => "approx",
+        "beta" => "beta",
+        "bigcirc" => "circle.big",
+        "bowtie" => "join",
+        "bullet" => "bullet",
+        "cdots" => "dots.c",
+        "chi" => "chi",
+        "circ" => "circle.small", // 'circle.small' or 'compose'
+        "colon" => "colon",
+        "copyright" => "copyright",
+        "delta" => "delta",
+        "diamond" => "diamond",
+        "emptyset" => "nothing",
+        "epsilon" => "epsilon.alt",
+        "equiv" => "equiv",
+        "eta" => "eta",
+        "frown" => "paren.t",
+        "gamma" => "gamma",
+        "ge" => "gt.eq",
+        "hbar" => "planck.reduce",
+        "intercal" => "top", // 'top' or 'tack.b'
+        "iota" => "iota",
+        "kappa" => "kappa",
+        "lambda" => "lambda",
+        "land" => "and",
+        "ldots" => "dots.h",
+        "le" => "lt.eq",
+        "leadsto" => "arrow.squiggly",
+        "lhd" => "triangle.l",
+        "lor" => "or",
+        "mu" => "mu",
+        "neq" => "eq.not",
+        "nu" => "nu",
+        "ntriangleleft" => "lt.tri.not",
+        "ntriangleright" => "gt.tri.not",
+        "omega" => "omega",
+        "omicron" => "omicron",
+        "phi" => "phi.alt",
+        "pi" => "pi",
+        "pounds" => "pound",
+        "psi" => "psi",
+        "rhd" => "triangle",
+        "rho" => "rho",
+        "sigma" => "sigma",
+        "simeq" => "tilde.eq",
+        "slash" => "slash",
+        "smallsetminus" => "without",
+        "smile" => "paren.b",
+        "tau" => "tau",
+        "theta" => "theta",
+        "to" => "arrow.r",
+        "top" => "top",
+        "triangle" => "triangle.t",
+        "upsilon" => "upsilon",
+        "varepsilon" => "epsilon",
+        "varphi" => "phi",
+        "varpi" => "pi.alt",
+        "varrho" => "rho.alt",
+        "varsigma" => "sigma.alt",
+        "vartheta" => "theta.alt",
+        "vee" => "or",
+        "wedge" => "and",
+        "xi" => "xi",
+        "yen" => "yen",
+        "zeta" => "zeta",
 
-        symbol_map.insert("Cap", "sect.double");
-        symbol_map.insert("Cup", "union.double");
-        symbol_map.insert("Delta", "Delta");
-        symbol_map.insert("Gamma", "Gamma");
-        symbol_map.insert("Join", "join");
-        symbol_map.insert("Lambda", "Lambda");
-        symbol_map.insert("Leftarrow", "arrow.l.double");
-        symbol_map.insert("Leftrightarrow", "arrow.l.r.double");
-        symbol_map.insert("Longrightarrow", "arrow.r.double.long");
-        symbol_map.insert("Omega", "Omega");
-        symbol_map.insert("P", "pilcrow");
-        symbol_map.insert("Phi", "Phi");
-        symbol_map.insert("Pi", "Pi");
-        symbol_map.insert("Psi", "Psi");
-        symbol_map.insert("Rightarrow", "arrow.r.double");
-        symbol_map.insert("S", "section");
-        symbol_map.insert("Sigma", "Sigma");
-        symbol_map.insert("Theta", "Theta");
-        symbol_map.insert("aleph", "alef");
-        symbol_map.insert("alpha", "alpha");
-        // symbol_map.insert("amalg", "product.co");
-        symbol_map.insert("angle", "angle");
-        symbol_map.insert("approx", "approx");
-        symbol_map.insert("approxeq", "approx.eq");
-        // symbol_map.insert("ast", "ast");
-        symbol_map.insert("beta", "beta");
-        symbol_map.insert("bigcap", "sect.big");
-        symbol_map.insert("bigcirc", "circle.big");
-        symbol_map.insert("bigcup", "union.big");
-        symbol_map.insert("bigodot", "dot.circle.big");
-        // symbol_map.insert("bigoplus", "xor.big"); // or "plus.circle.big"
-        symbol_map.insert("bigotimes", "times.circle.big");
-        symbol_map.insert("bigsqcup", "union.sq.big");
-        // symbol_map.insert("bigtriangledown", "triangle.b");
-        // symbol_map.insert("bigtriangleup", "triangle.t");
-        symbol_map.insert("biguplus", "union.plus.big");
-        symbol_map.insert("bigvee", "or.big");
-        symbol_map.insert("bigwedge", "and.big");
-        // symbol_map.insert("bowtie", "join");
-        symbol_map.insert("bullet", "bullet");
-        symbol_map.insert("cap", "sect");
-        symbol_map.insert("cdot", "dot.op"); // 'dot.op' or 'dot.c'
-        symbol_map.insert("cdots", "dots.c");
-        symbol_map.insert("checkmark", "checkmark");
-        symbol_map.insert("chi", "chi");
-        symbol_map.insert("circ", "circle.small"); // 'circle.small' or 'compose'
-        symbol_map.insert("colon", "colon");
-        symbol_map.insert("cong", "tilde.equiv");
-        symbol_map.insert("coprod", "product.co");
-        symbol_map.insert("copyright", "copyright");
-        symbol_map.insert("cup", "union");
-        symbol_map.insert("curlyvee", "or.curly");
-        symbol_map.insert("curlywedge", "and.curly");
-        symbol_map.insert("dagger", "dagger");
-        symbol_map.insert("dashv", "tack.l");
-        symbol_map.insert("ddagger", "dagger.double");
-        symbol_map.insert("delta", "delta");
-        symbol_map.insert("ddots", "dots.down");
-        symbol_map.insert("diamond", "diamond");
-        symbol_map.insert("div", "div");
-        symbol_map.insert("divideontimes", "times.div");
-        symbol_map.insert("dotplus", "plus.dot");
-        symbol_map.insert("downarrow", "arrow.b");
-        symbol_map.insert("ell", "ell");
-        symbol_map.insert("emptyset", "nothing");
-        symbol_map.insert("epsilon", "epsilon.alt");
-        symbol_map.insert("equiv", "equiv");
-        symbol_map.insert("eta", "eta");
-        symbol_map.insert("exists", "exists");
-        symbol_map.insert("forall", "forall");
-        // symbol_map.insert("frown", "paren.t");
-        symbol_map.insert("gamma", "gamma");
-        symbol_map.insert("ge", "gt.eq");
-        symbol_map.insert("geq", "gt.eq");
-        symbol_map.insert("geqslant", "gt.eq.slant");
-        symbol_map.insert("gg", "gt.double");
-        symbol_map.insert("hbar", "planck.reduce");
-        symbol_map.insert("imath", "dotless.i");
-        symbol_map.insert("iiiint", "integral.quad");
-        symbol_map.insert("iiint", "integral.triple");
-        symbol_map.insert("iint", "integral.double");
-        symbol_map.insert("in", "in");
-        symbol_map.insert("infty", "infinity");
-        symbol_map.insert("int", "integral");
-        symbol_map.insert("intercal", "top"); // 'top' or 'tack.b'
-        symbol_map.insert("iota", "iota");
-        symbol_map.insert("jmath", "dotless.j");
-        symbol_map.insert("kappa", "kappa");
-        symbol_map.insert("lambda", "lambda");
-        symbol_map.insert("land", "and");
-        symbol_map.insert("langle", "angle.l");
-        symbol_map.insert("lbrace", "brace.l");
-        symbol_map.insert("lbrack", "bracket.l");
-        symbol_map.insert("ldots", "dots.h");
-        symbol_map.insert("le", "lt.eq");
-        symbol_map.insert("leadsto", "arrow.squiggly");
-        symbol_map.insert("leftarrow", "arrow.l");
-        symbol_map.insert("leftthreetimes", "times.three.l");
-        symbol_map.insert("leftrightarrow", "arrow.l.r");
-        symbol_map.insert("leq", "lt.eq");
-        symbol_map.insert("leqslant", "lt.eq.slant");
-        symbol_map.insert("lhd", "triangle.l");
-        symbol_map.insert("ll", "lt.double");
-        // symbol_map.insert("longmapsto", "arrow.bar.long");
-        // symbol_map.insert("longrightarrow", "arrow.long");
-        symbol_map.insert("lor", "or");
-        symbol_map.insert("ltimes", "times.l");
-        // symbol_map.insert("mapsto", "arrow.bar");
-        symbol_map.insert("measuredangle", "angle.arc");
-        symbol_map.insert("mid", "divides");
-        symbol_map.insert("models", "models");
-        symbol_map.insert("mp", "minus.plus");
-        symbol_map.insert("mu", "mu");
-        // symbol_map.insert("nRightarrow", "arrow.double.not");
-        symbol_map.insert("nabla", "nabla");
-        symbol_map.insert("ncong", "tilde.equiv.not");
-        symbol_map.insert("ne", "eq.not");
-        symbol_map.insert("neg", "not");
-        symbol_map.insert("neq", "eq.not");
-        symbol_map.insert("nexists", "exists.not");
-        symbol_map.insert("ni", "in.rev");
-        symbol_map.insert("nleftarrow", "arrow.l.not");
-        symbol_map.insert("nleq", "lt.eq.not");
-        symbol_map.insert("nparallel", "parallel.not");
-        symbol_map.insert("ngeq", "gt.eq.not");
-        symbol_map.insert("nmid", "divides.not");
-        symbol_map.insert("notin", "in.not");
-        // symbol_map.insert("nrightarrow", "arrow.not");
-        symbol_map.insert("nsim", "tilde.not");
-        symbol_map.insert("nsubseteq", "subset.eq.not");
-        symbol_map.insert("nu", "nu");
-        symbol_map.insert("ntriangleleft", "lt.tri.not");
-        symbol_map.insert("ntriangleright", "gt.tri.not");
-        symbol_map.insert("nwarrow", "arrow.tl");
-        symbol_map.insert("odot", "dot.circle");
-        symbol_map.insert("oint", "integral.cont");
-        symbol_map.insert("oiint", "integral.surf");
-        symbol_map.insert("oiiint", "integral.vol");
-        symbol_map.insert("omega", "omega");
-        // symbol_map.insert("omicron", "omicron");
-        symbol_map.insert("ominus", "minus.circle");
-        // symbol_map.insert("oplus", "xor"); // or 'plus.circle'
-        symbol_map.insert("otimes", "times.circle");
-        symbol_map.insert("parallel", "parallel");
-        symbol_map.insert("partial", "diff");
-        symbol_map.insert("perp", "perp");
-        symbol_map.insert("phi", "phi.alt");
-        symbol_map.insert("pi", "pi");
-        symbol_map.insert("pm", "plus.minus");
-        symbol_map.insert("pounds", "pound");
-        symbol_map.insert("prec", "prec");
-        symbol_map.insert("preceq", "prec.eq");
-        symbol_map.insert("prime", "prime");
-        symbol_map.insert("prod", "product");
-        symbol_map.insert("propto", "prop");
-        symbol_map.insert("psi", "psi");
-        symbol_map.insert("rangle", "angle.r");
-        symbol_map.insert("rbrace", "brace.r");
-        symbol_map.insert("rbrack", "bracket.r");
-        symbol_map.insert("rhd", "triangle");
-        symbol_map.insert("rho", "rho");
-        symbol_map.insert("rightarrow", "arrow.r");
-        symbol_map.insert("rightthreetimes", "times.three.r");
-        symbol_map.insert("rtimes", "times.r");
-        symbol_map.insert("setminus", "without");
-        symbol_map.insert("sigma", "sigma");
-        symbol_map.insert("sim", "tilde.op");
-        symbol_map.insert("simeq", "tilde.eq");
-        symbol_map.insert("slash", "slash");
-        symbol_map.insert("smallsetminus", "without");
-        // symbol_map.insert("smile", "paren.b");
-        symbol_map.insert("spadesuit", "suit.spade");
-        symbol_map.insert("sqcap", "sect.sq");
-        symbol_map.insert("sqcup", "union.sq");
-        symbol_map.insert("sqsubseteq", "subset.eq.sq");
-        symbol_map.insert("sqsupseteq", "supset.eq.sq");
-        // symbol_map.insert("star", "star");
-        symbol_map.insert("subset", "subset");
-        symbol_map.insert("subseteq", "subset.eq");
-        symbol_map.insert("subsetneq", "subset.neq");
-        symbol_map.insert("succ", "succ");
-        symbol_map.insert("succeq", "succ.eq");
-        symbol_map.insert("sum", "sum");
-        symbol_map.insert("supset", "supset");
-        symbol_map.insert("supseteq", "supset.eq");
-        symbol_map.insert("supsetneq", "supset.neq");
-        symbol_map.insert("swarrow", "arrow.bl");
-        symbol_map.insert("tau", "tau");
-        symbol_map.insert("theta", "theta");
-        symbol_map.insert("times", "times");
-        symbol_map.insert("to", "arrow.r");
-        symbol_map.insert("top", "top");
-        symbol_map.insert("triangle", "triangle.t");
-        // symbol_map.insert("triangledown", "triangle.b.small");
-        // symbol_map.insert("triangleleft", "triangle.l.small");
-        // symbol_map.insert("triangleright", "triangle.r.small");
-        symbol_map.insert("twoheadrightarrow", "arrow.r.twohead");
-        symbol_map.insert("uparrow", "arrow.t");
-        symbol_map.insert("updownarrow", "arrow.t.b");
-        symbol_map.insert("upharpoonright", "harpoon.tr");
-        symbol_map.insert("uplus", "union.plus");
-        symbol_map.insert("upsilon", "upsilon");
-        symbol_map.insert("varepsilon", "epsilon");
-        symbol_map.insert("varnothing", "diameter"); // empty set
-        symbol_map.insert("varphi", "phi");
-        symbol_map.insert("varpi", "pi.alt");
-        symbol_map.insert("varrho", "rho.alt");
-        symbol_map.insert("varsigma", "sigma.alt");
-        symbol_map.insert("vartheta", "theta.alt");
-        symbol_map.insert("vdash", "tack.r");
-        symbol_map.insert("vdots", "dots.v");
-        symbol_map.insert("vee", "or");
-        symbol_map.insert("wedge", "and");
-        symbol_map.insert("wr", "wreath");
-        symbol_map.insert("xi", "xi");
-        symbol_map.insert("yen", "yen");
-        symbol_map.insert("zeta", "zeta");
+        "mathscr" => "scr",
+        "LaTeX" => "#LaTeX",
+        "TeX" => "#TeX",
 
-        // extended
-        symbol_map.insert("mathscr", "scr");
-        symbol_map.insert("LaTeX", "#LaTeX");
-        symbol_map.insert("TeX", "#TeX");
-
-        symbol_map.insert("lparen", "paren.l");
-        symbol_map.insert("lParen", "paren.l.double");
-        symbol_map.insert("rparen", "paren.r");
-        symbol_map.insert("rParen", "paren.r.double");
-        symbol_map.insert("overparen", "paren.t");
-        symbol_map.insert("underparen", "paren.b");
-        symbol_map.insert("lbrace", "brace.l");
-        symbol_map.insert("lBrace", "brace.l.double");
-        symbol_map.insert("rbrace", "brace.r");
-        symbol_map.insert("rBrace", "brace.r.double");
-        symbol_map.insert("lbrack", "bracket.l");
-        symbol_map.insert("lBrack", "bracket.l.double");
-        symbol_map.insert("rbrack", "bracket.r");
-        symbol_map.insert("rBrack", "bracket.r.double");
-        symbol_map.insert("overbracket", "bracket.t");
-        symbol_map.insert("underbracket", "bracket.b");
-        symbol_map.insert("lbrbrak", "shell.l");
-        symbol_map.insert("Lbrbrak", "shell.l.double");
-        symbol_map.insert("rbrbrak", "shell.r");
-        symbol_map.insert("Rbrbrak", "shell.r.double");
-        symbol_map.insert("obrbrak", "shell.t");
-        symbol_map.insert("ubrbrak", "shell.b");
-        symbol_map.insert("vert", "bar.v");
-        symbol_map.insert("Vert", "bar.v.double");
-        symbol_map.insert("Vvert", "bar.v.triple");
-        symbol_map.insert("circledvert", "bar.v.circle");
-        symbol_map.insert("horizbar", "bar.h");
-        symbol_map.insert("lvzigzag", "fence.l");
-        symbol_map.insert("Lvzigzag", "fence.l.double");
-        symbol_map.insert("rvzigzag", "fence.r");
-        symbol_map.insert("Rvzigzag", "fence.r.double");
-        symbol_map.insert("fourvdots", "fence.dotted");
-        symbol_map.insert("angle", "angle");
-        symbol_map.insert("langle", "angle.l");
-        symbol_map.insert("lcurvyangle", "angle.l.curly");
-        symbol_map.insert("langledot", "angle.l.dot");
-        symbol_map.insert("rangle", "angle.r");
-        symbol_map.insert("rcurvyangle", "angle.r.curly");
-        symbol_map.insert("rangledot", "angle.r.dot");
-        symbol_map.insert("angdnr", "angle.acute");
-        symbol_map.insert("measuredangle", "angle.arc");
-        symbol_map.insert("measuredangleleft", "angle.arc.rev");
-        symbol_map.insert("wideangledown", "angle.oblique");
-        symbol_map.insert("revangle", "angle.rev");
-        symbol_map.insert("rightangle", "angle.right");
-        symbol_map.insert("measuredrightangle", "angle.right.arc");
-        symbol_map.insert("rightanglemdot", "angle.right.dot");
-        symbol_map.insert("rightanglesqr", "angle.right.sq");
-        symbol_map.insert("angles", "angle.s");
-        symbol_map.insert("threedangle", "angle.spatial");
-        symbol_map.insert("sphericalangle", "angle.spheric");
-        symbol_map.insert("gtlpar", "angle.spheric.rev");
-        symbol_map.insert("sphericalangleup", "angle.spheric.top");
-        symbol_map.insert("lceil", "ceil.l");
-        symbol_map.insert("rceil", "ceil.r");
-        symbol_map.insert("lfloor", "floor.l");
-        symbol_map.insert("rfloor", "floor.r");
-        symbol_map.insert("mathampersand", "amp");
-        symbol_map.insert("upand", "amp.inv");
-        symbol_map.insert("ast", "ast.op");
-        symbol_map.insert("circledast", "ast.circle");
-        symbol_map.insert("boxast", "ast.square");
-        symbol_map.insert("mathatsign", "at");
-        symbol_map.insert("backslash", "backslash");
-        symbol_map.insert("obslash", "backslash.circle");
-        symbol_map.insert("rsolbar", "backslash.not");
-        symbol_map.insert("mathcolon", "colon");
-        symbol_map.insert("Colon", "colon.double");
-        symbol_map.insert("coloneq", "colon.eq");
-        symbol_map.insert("Coloneq", "colon.double.eq");
-        symbol_map.insert("mathcomma", "comma");
-        symbol_map.insert("dagger", "dagger");
-        symbol_map.insert("ddagger", "dagger.double");
-        symbol_map.insert("dashcolon", "dash.colon");
-        symbol_map.insert("circleddash", "dash.circle");
-        symbol_map.insert("hzigzag", "dash.wave.double");
-        symbol_map.insert("cdot", "dot.op");
-        symbol_map.insert("mathperiod", "dot.basic");
-        symbol_map.insert("cdotp", "dot.c");
-        symbol_map.insert("odot", "dot.circle");
-        symbol_map.insert("bigodot", "dot.circle.big");
-        symbol_map.insert("boxdot", "dot.square");
-        symbol_map.insert("dddot", "dot.triple");
-        symbol_map.insert("ddddot", "dot.quad");
-        symbol_map.insert("mathexclam", "excl");
-        symbol_map.insert("Exclam", "excl.double");
-        symbol_map.insert("mathquestion", "quest");
-        symbol_map.insert("Question", "quest.double");
-        symbol_map.insert("mathoctothorpe", "hash");
-        // symbol_map.insert("mathhyphen", "hyph");
-        symbol_map.insert("mathpercent", "percent");
-        symbol_map.insert("mathparagraph", "pilcrow");
-        symbol_map.insert("mathsection", "section");
-        symbol_map.insert("mathsemicolon", "semi");
-        symbol_map.insert("mathslash", "slash");
-        symbol_map.insert("sslash", "slash.double");
-        symbol_map.insert("trslash", "slash.triple");
-        symbol_map.insert("xsol", "slash.big");
-        symbol_map.insert("unicodecdots", "dots.h.c");
-        symbol_map.insert("unicodeellipsis", "dots.h");
-        symbol_map.insert("vdots", "dots.v");
-        symbol_map.insert("ddots", "dots.down");
-        symbol_map.insert("adots", "dots.up");
-        symbol_map.insert("sim", "tilde.op");
-        symbol_map.insert("dotsim", "tilde.dot");
-        symbol_map.insert("sime", "tilde.eq");
-        symbol_map.insert("nsimeq", "tilde.eq.not");
-        symbol_map.insert("backsimeq", "tilde.eq.rev");
-        symbol_map.insert("cong", "tilde.equiv");
-        symbol_map.insert("ncong", "tilde.equiv.not");
-        symbol_map.insert("simneqq", "tilde.nequiv");
-        symbol_map.insert("nsim", "tilde.not");
-        symbol_map.insert("backsim", "tilde.rev");
-        symbol_map.insert("backcong", "tilde.rev.equiv");
-        symbol_map.insert("approxident", "tilde.triple");
-        symbol_map.insert("caretinsert", "caret");
-        symbol_map.insert("prime", "prime");
-        symbol_map.insert("backprime", "prime.rev");
-        symbol_map.insert("dprime", "prime.double");
-        symbol_map.insert("backdprime", "prime.double.rev");
-        symbol_map.insert("trprime", "prime.triple");
-        symbol_map.insert("backtrprime", "prime.triple.rev");
-        symbol_map.insert("qprime", "prime.quad");
-        symbol_map.insert("mathplus", "plus");
-        symbol_map.insert("oplus", "plus.circle");
-        symbol_map.insert("rightarrowonoplus", "plus.circle.arrow");
-        symbol_map.insert("bigoplus", "plus.circle.big");
-        symbol_map.insert("dotplus", "plus.dot");
-        symbol_map.insert("doubleplus", "plus.double");
-        symbol_map.insert("pm", "plus.minus");
-        symbol_map.insert("boxplus", "plus.square");
-        symbol_map.insert("triangleplus", "plus.triangle");
-        symbol_map.insert("tripleplus", "plus.triple");
-        symbol_map.insert("minus", "minus");
-        symbol_map.insert("ominus", "minus.circle");
-        symbol_map.insert("dotminus", "minus.dot");
-        symbol_map.insert("mp", "minus.plus");
-        symbol_map.insert("boxminus", "minus.square");
-        symbol_map.insert("eqsim", "minus.tilde");
-        symbol_map.insert("triangleminus", "minus.triangle");
-        symbol_map.insert("div", "div");
-        symbol_map.insert("odiv", "div.circle");
-        symbol_map.insert("times", "times");
-        symbol_map.insert("bigtimes", "times.big");
-        symbol_map.insert("otimes", "times.circle");
-        symbol_map.insert("bigotimes", "times.circle.big");
-        symbol_map.insert("divideontimes", "times.div");
-        symbol_map.insert("leftthreetimes", "times.three.l");
-        symbol_map.insert("rightthreetimes", "times.three.r");
-        symbol_map.insert("ltimes", "times.l");
-        symbol_map.insert("rtimes", "times.r");
-        symbol_map.insert("boxtimes", "times.square");
-        symbol_map.insert("triangletimes", "times.triangle");
-        symbol_map.insert("mathratio", "ratio");
-        symbol_map.insert("equal", "eq");
-        symbol_map.insert("stareq", "eq.star");
-        symbol_map.insert("circledequal", "eq.circle");
-        symbol_map.insert("eqcolon", "eq.colon");
+        "lparen" => "paren.l",
+        "lParen" => "paren.l.double",
+        "rparen" => "paren.r",
+        "rParen" => "paren.r.double",
+        "overparen" => "paren.t",
+        "underparen" => "paren.b",
+        "lbrace" => "brace.l",
+        "lBrace" => "brace.l.double",
+        "rbrace" => "brace.r",
+        "rBrace" => "brace.r.double",
+        "lbrack" => "bracket.l",
+        "lBrack" => "bracket.l.double",
+        "rbrack" => "bracket.r",
+        "rBrack" => "bracket.r.double",
+        "overbracket" => "bracket.t",
+        "underbracket" => "bracket.b",
+        "lbrbrak" => "shell.l",
+        "Lbrbrak" => "shell.l.double",
+        "rbrbrak" => "shell.r",
+        "Rbrbrak" => "shell.r.double",
+        "obrbrak" => "shell.t",
+        "ubrbrak" => "shell.b",
+        "vert" => "bar.v",
+        "Vert" => "bar.v.double",
+        "Vvert" => "bar.v.triple",
+        "circledvert" => "bar.v.circle",
+        "horizbar" => "bar.h",
+        "lvzigzag" => "fence.l",
+        "Lvzigzag" => "fence.l.double",
+        "rvzigzag" => "fence.r",
+        "Rvzigzag" => "fence.r.double",
+        "fourvdots" => "fence.dotted",
+        "angle" => "angle",
+        "langle" => "angle.l",
+        "lcurvyangle" => "angle.l.curly",
+        "langledot" => "angle.l.dot",
+        "rangle" => "angle.r",
+        "rcurvyangle" => "angle.r.curly",
+        "rangledot" => "angle.r.dot",
+        "angdnr" => "angle.acute",
+        "measuredangle" => "angle.arc",
+        "measuredangleleft" => "angle.arc.rev",
+        "wideangledown" => "angle.oblique",
+        "revangle" => "angle.rev",
+        "rightangle" => "angle.right",
+        "measuredrightangle" => "angle.right.arc",
+        "rightanglemdot" => "angle.right.dot",
+        "rightanglesqr" => "angle.right.sq",
+        "angles" => "angle.s",
+        "threedangle" => "angle.spatial",
+        "sphericalangle" => "angle.spheric",
+        "gtlpar" => "angle.spheric.rev",
+        "sphericalangleup" => "angle.spheric.top",
+        "lceil" => "ceil.l",
+        "rceil" => "ceil.r",
+        "lfloor" => "floor.l",
+        "rfloor" => "floor.r",
+        "mathampersand" => "amp",
+        "upand" => "amp.inv",
+        "ast" => "ast.op",
+        "circledast" => "ast.circle",
+        "boxast" => "ast.square",
+        "mathatsign" => "at",
+        "backslash" => "backslash",
+        "obslash" => "backslash.circle",
+        "rsolbar" => "backslash.not",
+        "mathcolon" => "colon",
+        "Colon" => "colon.double",
+        "coloneq" => "colon.eq",
+        "Coloneq" => "colon.double.eq",
+        "mathcomma" => "comma",
+        "dagger" => "dagger",
+        "ddagger" => "dagger.double",
+        "dashcolon" => "dash.colon",
+        "circleddash" => "dash.circle",
+        "hzigzag" => "dash.wave.double",
+        "cdot" => "dot.op",
+        "mathperiod" => "dot.basic",
+        "cdotp" => "dot.c",
+        "odot" => "dot.circle",
+        "bigodot" => "dot.circle.big",
+        "boxdot" => "dot.square",
+        "dddot" => "dot.triple",
+        "ddddot" => "dot.quad",
+        "mathexclam" => "excl",
+        "Exclam" => "excl.double",
+        "mathquestion" => "quest",
+        "Question" => "quest.double",
+        "mathoctothorpe" => "hash",
+        // "mathhyphen" => "hyph",
+        "mathpercent" => "percent",
+        "mathparagraph" => "pilcrow",
+        "mathsection" => "section",
+        "mathsemicolon" => "semi",
+        "mathslash" => "slash",
+        "sslash" => "slash.double",
+        "trslash" => "slash.triple",
+        "xsol" => "slash.big",
+        "unicodecdots" => "dots.h.c",
+        "unicodeellipsis" => "dots.h",
+        "vdots" => "dots.v",
+        "ddots" => "dots.down",
+        "adots" => "dots.up",
+        "sim" => "tilde.op",
+        "dotsim" => "tilde.dot",
+        "sime" => "tilde.eq",
+        "nsimeq" => "tilde.eq.not",
+        "backsimeq" => "tilde.eq.rev",
+        "cong" => "tilde.equiv",
+        "ncong" => "tilde.equiv.not",
+        "simneqq" => "tilde.nequiv",
+        "nsim" => "tilde.not",
+        "backsim" => "tilde.rev",
+        "backcong" => "tilde.rev.equiv",
+        "approxident" => "tilde.triple",
+        "caretinsert" => "caret",
+        "prime" => "prime",
+        "backprime" => "prime.rev",
+        "dprime" => "prime.double",
+        "backdprime" => "prime.double.rev",
+        "trprime" => "prime.triple",
+        "backtrprime" => "prime.triple.rev",
+        "qprime" => "prime.quad",
+        "mathplus" => "plus",
+        "oplus" => "plus.circle",
+        "rightarrowonoplus" => "plus.circle.arrow",
+        "bigoplus" => "plus.circle.big",
+        "dotplus" => "plus.dot",
+        "doubleplus" => "plus.double",
+        "pm" => "plus.minus",
+        "boxplus" => "plus.square",
+        "triangleplus" => "plus.triangle",
+        "tripleplus" => "plus.triple",
+        "minus" => "minus",
+        "ominus" => "minus.circle",
+        "dotminus" => "minus.dot",
+        "mp" => "minus.plus",
+        "boxminus" => "minus.square",
+        "eqsim" => "minus.tilde",
+        "triangleminus" => "minus.triangle",
+        "div" => "div",
+        "odiv" => "div.circle",
+        "times" => "times",
+        "bigtimes" => "times.big",
+        "otimes" => "times.circle",
+        "bigotimes" => "times.circle.big",
+        "divideontimes" => "times.div",
+        "leftthreetimes" => "times.three.l",
+        "rightthreetimes" => "times.three.r",
+        "ltimes" => "times.l",
+        "rtimes" => "times.r",
+        "boxtimes" => "times.square",
+        "triangletimes" => "times.triangle",
+        "mathratio" => "ratio",
+        "equal" => "eq",
+        "stareq" => "eq.star",
+        "circledequal" => "eq.circle",
+        "eqcolon" => "eq.colon",
         // \usepackage{mathtools} defines \eqdef
         // https://tex.stackexchange.com/questions/28836/typesetting-the-define-equals-symbol
-        symbol_map.insert("eqdef", "eq.def");
-        symbol_map.insert("triangleq", "eq.delta");
-        symbol_map.insert("veeeq", "eq.equi");
-        symbol_map.insert("wedgeq", "eq.est");
-        symbol_map.insert("eqgtr", "eq.gt");
-        symbol_map.insert("eqless", "eq.lt");
-        symbol_map.insert("measeq", "eq.m");
-        symbol_map.insert("ne", "eq.not");
-        symbol_map.insert("curlyeqprec", "eq.prec");
-        symbol_map.insert("questeq", "eq.quest");
-        symbol_map.insert("curlyeqsucc", "eq.succ");
-        symbol_map.insert("equiv", "eq.triple");
-        symbol_map.insert("Equiv", "eq.quad");
-        symbol_map.insert("greater", "gt");
-        symbol_map.insert("ogreaterthan", "gt.circle");
-        symbol_map.insert("gtrdot", "gt.dot");
-        symbol_map.insert("gtrapprox", "gt.approx");
-        symbol_map.insert("gg", "gt.double");
-        symbol_map.insert("geq", "gt.eq");
-        symbol_map.insert("geqslant", "gt.eq.slant");
-        symbol_map.insert("gtreqless", "gt.eq.lt");
-        symbol_map.insert("ngeq", "gt.eq.not");
-        symbol_map.insert("geqq", "gt.equiv");
-        symbol_map.insert("gtrless", "gt.lt");
-        symbol_map.insert("ngtrless", "gt.lt.not");
-        symbol_map.insert("gneq", "gt.neq");
-        symbol_map.insert("gnapprox", "gt.napprox");
-        symbol_map.insert("gneqq", "gt.nequiv");
-        symbol_map.insert("ngtr", "gt.not");
-        symbol_map.insert("gnsim", "gt.ntilde");
-        symbol_map.insert("gtrsim", "gt.tilde");
-        symbol_map.insert("ngtrsim", "gt.tilde.not");
-        symbol_map.insert("vartriangleright", "gt.tri");
-        symbol_map.insert("trianglerighteq", "gt.tri.eq");
-        symbol_map.insert("ntrianglerighteq", "gt.tri.eq.not");
-        symbol_map.insert("nvartriangleright", "gt.tri.not");
-        symbol_map.insert("ggg", "gt.triple");
-        symbol_map.insert("gggnest", "gt.triple.nested");
-        symbol_map.insert("less", "lt");
-        symbol_map.insert("olessthan", "lt.circle");
-        symbol_map.insert("lessdot", "lt.dot");
-        symbol_map.insert("lessapprox", "lt.approx");
-        symbol_map.insert("ll", "lt.double");
-        symbol_map.insert("leq", "lt.eq");
-        symbol_map.insert("leqslant", "lt.eq.slant");
-        symbol_map.insert("lesseqgtr", "lt.eq.gt");
-        symbol_map.insert("nleq", "lt.eq.not");
-        symbol_map.insert("leqq", "lt.equiv");
-        symbol_map.insert("lessgtr", "lt.gt");
-        symbol_map.insert("nlessgtr", "lt.gt.not");
-        symbol_map.insert("lneq", "lt.neq");
-        symbol_map.insert("lnapprox", "lt.napprox");
-        symbol_map.insert("lneqq", "lt.nequiv");
-        symbol_map.insert("nless", "lt.not");
-        symbol_map.insert("lnsim", "lt.ntilde");
-        symbol_map.insert("lesssim", "lt.tilde");
-        symbol_map.insert("nlesssim", "lt.tilde.not");
-        symbol_map.insert("vartriangleleft", "lt.tri");
-        symbol_map.insert("trianglelefteq", "lt.tri.eq");
-        symbol_map.insert("ntrianglelefteq", "lt.tri.eq.not");
-        symbol_map.insert("nvartriangleleft", "lt.tri.not");
-        symbol_map.insert("lll", "lt.triple");
-        symbol_map.insert("lllnest", "lt.triple.nested");
-        symbol_map.insert("approx", "approx");
-        symbol_map.insert("approxeq", "approx.eq");
-        symbol_map.insert("napprox", "approx.not");
-        symbol_map.insert("prec", "prec");
-        symbol_map.insert("precapprox", "prec.approx");
-        symbol_map.insert("preccurlyeq", "prec.curly.eq");
-        symbol_map.insert("npreccurlyeq", "prec.curly.eq.not");
-        symbol_map.insert("Prec", "prec.double");
-        symbol_map.insert("preceq", "prec.eq");
-        symbol_map.insert("preceqq", "prec.equiv");
-        symbol_map.insert("precnapprox", "prec.napprox");
-        symbol_map.insert("precneq", "prec.neq");
-        symbol_map.insert("precneqq", "prec.nequiv");
-        symbol_map.insert("nprec", "prec.not");
-        symbol_map.insert("precnsim", "prec.ntilde");
-        symbol_map.insert("precsim", "prec.tilde");
-        symbol_map.insert("succ", "succ");
-        symbol_map.insert("succapprox", "succ.approx");
-        symbol_map.insert("succcurlyeq", "succ.curly.eq");
-        symbol_map.insert("nsucccurlyeq", "succ.curly.eq.not");
-        symbol_map.insert("Succ", "succ.double");
-        symbol_map.insert("succeq", "succ.eq");
-        symbol_map.insert("succeqq", "succ.equiv");
-        symbol_map.insert("succnapprox", "succ.napprox");
-        symbol_map.insert("succneq", "succ.neq");
-        symbol_map.insert("succneqq", "succ.nequiv");
-        symbol_map.insert("nsucc", "succ.not");
-        symbol_map.insert("succnsim", "succ.ntilde");
-        symbol_map.insert("succsim", "succ.tilde");
-        symbol_map.insert("nequiv", "equiv.not");
-        symbol_map.insert("propto", "prop");
-        symbol_map.insert("origof", "original");
-        symbol_map.insert("imageof", "image");
-        symbol_map.insert("varnothing", "emptyset");
-        symbol_map.insert("emptysetoarr", "emptyset.arrow.r");
-        symbol_map.insert("emptysetoarrl", "emptyset.arrow.l");
-        symbol_map.insert("emptysetobar", "emptyset.bar");
-        symbol_map.insert("emptysetocirc", "emptyset.circle");
-        symbol_map.insert("revemptyset", "emptyset.rev");
-        symbol_map.insert("setminus", "without");
-        symbol_map.insert("complement", "complement");
-        symbol_map.insert("in", "in");
-        symbol_map.insert("notin", "in.not");
-        symbol_map.insert("ni", "in.rev");
-        symbol_map.insert("nni", "in.rev.not");
-        symbol_map.insert("smallni", "in.rev.small");
-        symbol_map.insert("smallin", "in.small");
-        symbol_map.insert("subset", "subset");
-        symbol_map.insert("subsetdot", "subset.dot");
-        symbol_map.insert("Subset", "subset.double");
-        symbol_map.insert("subseteq", "subset.eq");
-        symbol_map.insert("nsubseteq", "subset.eq.not");
-        symbol_map.insert("sqsubseteq", "subset.eq.sq");
-        symbol_map.insert("nsqsubseteq", "subset.eq.sq.not");
-        symbol_map.insert("subsetneq", "subset.neq");
-        symbol_map.insert("nsubset", "subset.not");
-        symbol_map.insert("sqsubset", "subset.sq");
-        symbol_map.insert("sqsubsetneq", "subset.sq.neq");
-        symbol_map.insert("supset", "supset");
-        symbol_map.insert("supsetdot", "supset.dot");
-        symbol_map.insert("Supset", "supset.double");
-        symbol_map.insert("supseteq", "supset.eq");
-        symbol_map.insert("nsupseteq", "supset.eq.not");
-        symbol_map.insert("sqsupseteq", "supset.eq.sq");
-        symbol_map.insert("nsqsupseteq", "supset.eq.sq.not");
-        symbol_map.insert("supsetneq", "supset.neq");
-        symbol_map.insert("nsupset", "supset.not");
-        symbol_map.insert("sqsupset", "supset.sq");
-        symbol_map.insert("sqsupsetneq", "supset.sq.neq");
-        symbol_map.insert("cup", "union");
-        symbol_map.insert("cupleftarrow", "union.arrow");
-        symbol_map.insert("bigcup", "union.big");
-        symbol_map.insert("cupdot", "union.dot");
-        symbol_map.insert("bigcupdot", "union.dot.big");
-        symbol_map.insert("Cup", "union.double");
-        symbol_map.insert("uminus", "union.minus");
-        symbol_map.insert("cupvee", "union.or");
-        symbol_map.insert("uplus", "union.plus");
-        symbol_map.insert("biguplus", "union.plus.big");
-        symbol_map.insert("sqcup", "union.sq");
-        symbol_map.insert("bigsqcup", "union.sq.big");
-        symbol_map.insert("Sqcup", "union.sq.double");
-        symbol_map.insert("cap", "sect");
-        symbol_map.insert("capwedge", "sect.and");
-        symbol_map.insert("bigcap", "sect.big");
-        symbol_map.insert("capdot", "sect.dot");
-        symbol_map.insert("Cap", "sect.double");
-        symbol_map.insert("sqcap", "sect.sq");
-        symbol_map.insert("bigsqcap", "sect.sq.big");
-        symbol_map.insert("Sqcap", "sect.sq.double");
-        symbol_map.insert("infty", "infinity");
-        symbol_map.insert("nvinfty", "infinity.bar");
-        symbol_map.insert("iinfin", "infinity.incomplete");
-        symbol_map.insert("tieinfty", "infinity.tie");
-        symbol_map.insert("partial", "diff");
-        symbol_map.insert("nabla", "gradient");
-        symbol_map.insert("sum", "sum");
-        symbol_map.insert("sumint", "sum.integral");
-        symbol_map.insert("prod", "product");
-        symbol_map.insert("coprod", "product.co");
-        symbol_map.insert("int", "integral");
-        symbol_map.insert("intlarhk", "integral.arrow.hook");
-        symbol_map.insert("awint", "integral.ccw");
-        symbol_map.insert("oint", "integral.cont");
-        symbol_map.insert("ointctrclockwise", "integral.cont.ccw");
-        symbol_map.insert("varointclockwise", "integral.cont.cw");
-        symbol_map.insert("intclockwise", "integral.cw");
-        symbol_map.insert("intbar", "integral.dash");
-        symbol_map.insert("intBar", "integral.dash.double");
-        symbol_map.insert("iint", "integral.double");
-        symbol_map.insert("iiiint", "integral.quad");
-        symbol_map.insert("intcap", "integral.sect");
-        symbol_map.insert("fint", "integral.slash");
-        symbol_map.insert("sqint", "integral.square");
-        symbol_map.insert("oiint", "integral.surf");
-        symbol_map.insert("intx", "integral.times");
-        symbol_map.insert("iiint", "integral.triple");
-        symbol_map.insert("intcup", "integral.union");
-        symbol_map.insert("oiiint", "integral.vol");
-        symbol_map.insert("increment", "laplace");
-        symbol_map.insert("forall", "forall");
-        symbol_map.insert("exists", "exists");
-        symbol_map.insert("nexists", "exists.not");
-        symbol_map.insert("top", "top");
-        symbol_map.insert("bot", "bot");
-        symbol_map.insert("neg", "not");
-        symbol_map.insert("wedge", "and");
-        symbol_map.insert("bigwedge", "and.big");
-        symbol_map.insert("curlywedge", "and.curly");
-        symbol_map.insert("wedgedot", "and.dot");
-        symbol_map.insert("Wedge", "and.double");
-        symbol_map.insert("vee", "or");
-        symbol_map.insert("bigvee", "or.big");
-        symbol_map.insert("curlyvee", "or.curly");
-        symbol_map.insert("veedot", "or.dot");
-        symbol_map.insert("Vee", "or.double");
-        symbol_map.insert("models", "models");
-        symbol_map.insert("Vdash", "forces");
-        symbol_map.insert("nVdash", "forces.not");
-        symbol_map.insert("therefore", "therefore");
-        symbol_map.insert("because", "because");
-        symbol_map.insert("QED", "qed");
-        symbol_map.insert("vysmwhtcircle", "compose");
-        symbol_map.insert("multimap", "multimap");
-        symbol_map.insert("dualmap", "multimap.double");
-        symbol_map.insert("tplus", "tiny");
-        symbol_map.insert("tminus", "miny");
-        symbol_map.insert("mid", "divides");
-        symbol_map.insert("nmid", "divides.not");
-        symbol_map.insert("wr", "wreath");
-        symbol_map.insert("parallel", "parallel");
-        symbol_map.insert("nhpar", "parallel.struck");
-        symbol_map.insert("circledparallel", "parallel.circle");
-        symbol_map.insert("equalparallel", "parallel.eq");
-        symbol_map.insert("equivVert", "parallel.equiv");
-        symbol_map.insert("nparallel", "parallel.not");
-        symbol_map.insert("eparsl", "parallel.slanted.eq");
-        symbol_map.insert("smeparsl", "parallel.slanted.eq.tilde");
-        symbol_map.insert("eqvparsl", "parallel.slanted.equiv");
-        symbol_map.insert("parsim", "parallel.tilde");
-        symbol_map.insert("perp", "perp");
-        symbol_map.insert("operp", "perp.circle");
-        symbol_map.insert("diameter", "diameter");
-        symbol_map.insert("Join", "join");
-        symbol_map.insert("rightouterjoin", "join.r");
-        symbol_map.insert("leftouterjoin", "join.l");
-        symbol_map.insert("fullouterjoin", "join.l.r");
-        symbol_map.insert("smashtimes", "smash");
-        symbol_map.insert("mathdollar", "dollar");
-        symbol_map.insert("euro", "euro");
-        symbol_map.insert("mathsterling", "pound");
-        symbol_map.insert("mathyen", "yen");
-        symbol_map.insert("checkmark", "checkmark");
-        symbol_map.insert("maltese", "maltese");
-        symbol_map.insert("clubsuit", "suit.club.filled");
-        symbol_map.insert("varclubsuit", "suit.club.stroked");
-        symbol_map.insert("vardiamondsuit", "suit.diamond.filled");
-        symbol_map.insert("diamondsuit", "suit.diamond.stroked");
-        symbol_map.insert("varheartsuit", "suit.heart.filled");
-        symbol_map.insert("heartsuit", "suit.heart.stroked");
-        symbol_map.insert("spadesuit", "suit.spade.filled");
-        symbol_map.insert("varspadesuit", "suit.spade.stroked");
-        symbol_map.insert("quarternote", "note.quarter.alt");
-        symbol_map.insert("eighthnote", "note.eighth.alt");
-        symbol_map.insert("twonotes", "note.eighth.beamed");
-        symbol_map.insert("natural", "natural");
-        symbol_map.insert("flat", "flat");
-        symbol_map.insert("sharp", "sharp");
-        symbol_map.insert("smblkcircle", "bullet");
-        symbol_map.insert("mdlgwhtcircle", "circle.stroked");
-        symbol_map.insert("mdsmwhtcircle", "circle.stroked.small");
-        symbol_map.insert("lgwhtcircle", "circle.stroked.big");
-        symbol_map.insert("mdlgblkcircle", "circle.filled");
-        symbol_map.insert("mdsmblkcircle", "circle.filled.tiny");
-        symbol_map.insert("vysmblkcircle", "circle.filled.small");
-        symbol_map.insert("lgblkcircle", "circle.filled.big");
-        symbol_map.insert("dottedcircle", "circle.dotted");
-        symbol_map.insert("circledcirc", "circle.nested");
-        symbol_map.insert("whthorzoval", "ellipse.stroked.h");
-        symbol_map.insert("whtvertoval", "ellipse.stroked.v");
-        symbol_map.insert("blkhorzoval", "ellipse.filled.h");
-        symbol_map.insert("blkvertoval", "ellipse.filled.v");
-        symbol_map.insert("bigtriangleup", "triangle.stroked.t");
-        symbol_map.insert("bigtriangledown", "triangle.stroked.b");
-        symbol_map.insert("triangleright", "triangle.stroked.r");
-        symbol_map.insert("triangleleft", "triangle.stroked.l");
-        symbol_map.insert("lltriangle", "triangle.stroked.bl");
-        symbol_map.insert("lrtriangle", "triangle.stroked.br");
-        symbol_map.insert("ultriangle", "triangle.stroked.tl");
-        symbol_map.insert("urtriangle", "triangle.stroked.tr");
-        symbol_map.insert("vartriangle", "triangle.stroked.small.t");
-        symbol_map.insert("triangledown", "triangle.stroked.small.b");
-        symbol_map.insert("smalltriangleright", "triangle.stroked.small.r");
-        symbol_map.insert("smalltriangleleft", "triangle.stroked.small.l");
-        symbol_map.insert("whiteinwhitetriangle", "triangle.stroked.nested");
-        symbol_map.insert("trianglecdot", "triangle.stroked.dot");
-        symbol_map.insert("bigblacktriangleup", "triangle.filled.t");
-        symbol_map.insert("bigblacktriangledown", "triangle.filled.b");
-        symbol_map.insert("blacktriangleright", "triangle.filled.r");
-        symbol_map.insert("blacktriangleleft", "triangle.filled.l");
-        symbol_map.insert("llblacktriangle", "triangle.filled.bl");
-        symbol_map.insert("lrblacktriangle", "triangle.filled.br");
-        symbol_map.insert("ulblacktriangle", "triangle.filled.tl");
-        symbol_map.insert("urblacktriangle", "triangle.filled.tr");
-        symbol_map.insert("blacktriangle", "triangle.filled.small.t");
-        symbol_map.insert("blacktriangledown", "triangle.filled.small.b");
-        symbol_map.insert("smallblacktriangleright", "triangle.filled.small.r");
-        symbol_map.insert("smallblacktriangleleft", "triangle.filled.small.l");
-        symbol_map.insert("mdlgwhtsquare", "square.stroked");
-        symbol_map.insert("smwhtsquare", "square.stroked.tiny");
-        symbol_map.insert("mdsmwhtsquare", "square.stroked.small");
-        symbol_map.insert("mdwhtsquare", "square.stroked.medium");
-        symbol_map.insert("lgwhtsquare", "square.stroked.big");
-        symbol_map.insert("dottedsquare", "square.stroked.dotted");
-        symbol_map.insert("squoval", "square.stroked.rounded");
-        symbol_map.insert("mdlgblksquare", "square.filled");
-        symbol_map.insert("smblksquare", "square.filled.tiny");
-        symbol_map.insert("mdsmblksquare", "square.filled.small");
-        symbol_map.insert("mdblksquare", "square.filled.medium");
-        symbol_map.insert("lgblksquare", "square.filled.big");
-        symbol_map.insert("hrectangle", "rect.stroked.h");
-        symbol_map.insert("vrectangle", "rect.stroked.v");
-        symbol_map.insert("hrectangleblack", "rect.filled.h");
-        symbol_map.insert("vrectangleblack", "rect.filled.v");
-        symbol_map.insert("pentagon", "penta.stroked");
-        symbol_map.insert("pentagonblack", "penta.filled");
-        symbol_map.insert("varhexagon", "hexa.stroked");
-        symbol_map.insert("varhexagonblack", "hexa.filled");
-        symbol_map.insert("mdlgwhtdiamond", "diamond.stroked");
-        symbol_map.insert("smwhtdiamond", "diamond.stroked.small");
-        symbol_map.insert("mdwhtdiamond", "diamond.stroked.medium");
-        symbol_map.insert("diamondcdot", "diamond.stroked.dot");
-        symbol_map.insert("mdlgblkdiamond", "diamond.filled");
-        symbol_map.insert("mdblkdiamond", "diamond.filled.medium");
-        symbol_map.insert("smblkdiamond", "diamond.filled.small");
-        symbol_map.insert("mdlgwhtlozenge", "lozenge.stroked");
-        symbol_map.insert("smwhtlozenge", "lozenge.stroked.small");
-        symbol_map.insert("mdwhtlozenge", "lozenge.stroked.medium");
-        symbol_map.insert("mdlgblklozenge", "lozenge.filled");
-        symbol_map.insert("smblklozenge", "lozenge.filled.small");
-        symbol_map.insert("mdblklozenge", "lozenge.filled.medium");
-        symbol_map.insert("parallelogram", "parallelogram.stroked");
-        symbol_map.insert("parallelogramblack", "parallelogram.filled");
-        symbol_map.insert("star", "star.op");
-        symbol_map.insert("bigwhitestar", "star.stroked");
-        symbol_map.insert("bigstar", "star.filled");
-        symbol_map.insert("rightarrow", "arrow.r");
-        symbol_map.insert("longmapsto", "arrow.r.long.bar");
-        symbol_map.insert("mapsto", "arrow.r.bar");
-        symbol_map.insert("rightdowncurvedarrow", "arrow.r.curve");
-        symbol_map.insert("rightdasharrow", "arrow.r.dashed");
-        symbol_map.insert("rightdotarrow", "arrow.r.dotted");
-        symbol_map.insert("Rightarrow", "arrow.r.double");
-        symbol_map.insert("Mapsto", "arrow.r.double.bar");
-        symbol_map.insert("Longrightarrow", "arrow.r.double.long");
-        symbol_map.insert("Longmapsto", "arrow.r.double.long.bar");
-        symbol_map.insert("nRightarrow", "arrow.r.double.not");
-        symbol_map.insert("hookrightarrow", "arrow.r.hook");
-        symbol_map.insert("longrightarrow", "arrow.r.long");
-        symbol_map.insert("longrightsquigarrow", "arrow.r.long.squiggly");
-        symbol_map.insert("looparrowright", "arrow.r.loop");
-        symbol_map.insert("nrightarrow", "arrow.r.not");
-        symbol_map.insert("RRightarrow", "arrow.r.quad");
-        symbol_map.insert("rightsquigarrow", "arrow.r.squiggly");
-        symbol_map.insert("rightarrowbar", "arrow.r.stop");
-        symbol_map.insert("rightwhitearrow", "arrow.r.stroked");
-        symbol_map.insert("rightarrowtail", "arrow.r.tail");
-        symbol_map.insert("similarrightarrow", "arrow.r.tilde");
-        symbol_map.insert("Rrightarrow", "arrow.r.triple");
-        symbol_map.insert("twoheadmapsto", "arrow.r.twohead.bar");
-        symbol_map.insert("twoheadrightarrow", "arrow.r.twohead");
-        symbol_map.insert("rightwavearrow", "arrow.r.wave");
-        symbol_map.insert("leftarrow", "arrow.l");
-        symbol_map.insert("mapsfrom", "arrow.l.bar");
-        symbol_map.insert("leftdowncurvedarrow", "arrow.l.curve");
-        symbol_map.insert("leftdasharrow", "arrow.l.dashed");
-        symbol_map.insert("leftdotarrow", "arrow.l.dotted");
-        symbol_map.insert("Leftarrow", "arrow.l.double");
-        symbol_map.insert("Mapsfrom", "arrow.l.double.bar");
-        symbol_map.insert("Longleftarrow", "arrow.l.double.long");
-        symbol_map.insert("Longmapsfrom", "arrow.l.double.long.bar");
-        symbol_map.insert("nLeftarrow", "arrow.l.double.not");
-        symbol_map.insert("hookleftarrow", "arrow.l.hook");
-        symbol_map.insert("longleftarrow", "arrow.l.long");
-        symbol_map.insert("longmapsfrom", "arrow.l.long.bar");
-        symbol_map.insert("longleftsquigarrow", "arrow.l.long.squiggly");
-        symbol_map.insert("looparrowleft", "arrow.l.loop");
-        symbol_map.insert("nleftarrow", "arrow.l.not");
-        symbol_map.insert("LLeftarrow", "arrow.l.quad");
-        symbol_map.insert("leftsquigarrow", "arrow.l.squiggly");
-        symbol_map.insert("barleftarrow", "arrow.l.stop");
-        symbol_map.insert("leftwhitearrow", "arrow.l.stroked");
-        symbol_map.insert("leftarrowtail", "arrow.l.tail");
-        symbol_map.insert("similarleftarrow", "arrow.l.tilde");
-        symbol_map.insert("Lleftarrow", "arrow.l.triple");
-        symbol_map.insert("twoheadmapsfrom", "arrow.l.twohead.bar");
-        symbol_map.insert("twoheadleftarrow", "arrow.l.twohead");
-        symbol_map.insert("leftwavearrow", "arrow.l.wave");
-        symbol_map.insert("uparrow", "arrow.t");
-        symbol_map.insert("mapsup", "arrow.t.bar");
-        symbol_map.insert("uprightcurvearrow", "arrow.t.curve");
-        symbol_map.insert("updasharrow", "arrow.t.dashed");
-        symbol_map.insert("Uparrow", "arrow.t.double");
-        symbol_map.insert("UUparrow", "arrow.t.quad");
-        symbol_map.insert("baruparrow", "arrow.t.stop");
-        symbol_map.insert("upwhitearrow", "arrow.t.stroked");
-        symbol_map.insert("Uuparrow", "arrow.t.triple");
-        symbol_map.insert("twoheaduparrow", "arrow.t.twohead");
-        symbol_map.insert("downarrow", "arrow.b");
-        symbol_map.insert("mapsdown", "arrow.b.bar");
-        symbol_map.insert("downrightcurvedarrow", "arrow.b.curve");
-        symbol_map.insert("downdasharrow", "arrow.b.dashed");
-        symbol_map.insert("Downarrow", "arrow.b.double");
-        symbol_map.insert("DDownarrow", "arrow.b.quad");
-        symbol_map.insert("downarrowbar", "arrow.b.stop");
-        symbol_map.insert("downwhitearrow", "arrow.b.stroked");
-        symbol_map.insert("Ddownarrow", "arrow.b.triple");
-        symbol_map.insert("twoheaddownarrow", "arrow.b.twohead");
-        symbol_map.insert("leftrightarrow", "arrow.l.r");
-        symbol_map.insert("Leftrightarrow", "arrow.l.r.double");
-        symbol_map.insert("Longleftrightarrow", "arrow.l.r.double.long");
-        symbol_map.insert("nLeftrightarrow", "arrow.l.r.double.not");
-        symbol_map.insert("longleftrightarrow", "arrow.l.r.long");
-        symbol_map.insert("nleftrightarrow", "arrow.l.r.not");
-        symbol_map.insert("leftrightsquigarrow", "arrow.l.r.wave");
-        symbol_map.insert("updownarrow", "arrow.t.b");
-        symbol_map.insert("Updownarrow", "arrow.t.b.double");
-        symbol_map.insert("nearrow", "arrow.tr");
-        symbol_map.insert("Nearrow", "arrow.tr.double");
-        symbol_map.insert("hknearrow", "arrow.tr.hook");
-        symbol_map.insert("searrow", "arrow.br");
-        symbol_map.insert("Searrow", "arrow.br.double");
-        symbol_map.insert("hksearrow", "arrow.br.hook");
-        symbol_map.insert("nwarrow", "arrow.tl");
-        symbol_map.insert("Nwarrow", "arrow.tl.double");
-        symbol_map.insert("hknwarrow", "arrow.tl.hook");
-        symbol_map.insert("swarrow", "arrow.bl");
-        symbol_map.insert("Swarrow", "arrow.bl.double");
-        symbol_map.insert("hkswarrow", "arrow.bl.hook");
-        symbol_map.insert("nwsearrow", "arrow.tl.br");
-        symbol_map.insert("neswarrow", "arrow.tr.bl");
-        symbol_map.insert("acwopencirclearrow", "arrow.ccw");
-        symbol_map.insert("curvearrowleft", "arrow.ccw.half");
-        symbol_map.insert("cwopencirclearrow", "arrow.cw");
-        symbol_map.insert("curvearrowright", "arrow.cw.half");
-        symbol_map.insert("downzigzagarrow", "arrow.zigzag");
-        symbol_map.insert("rightrightarrows", "arrows.rr");
-        symbol_map.insert("leftleftarrows", "arrows.ll");
-        symbol_map.insert("upuparrows", "arrows.tt");
-        symbol_map.insert("downdownarrows", "arrows.bb");
-        symbol_map.insert("leftrightarrows", "arrows.lr");
-        symbol_map.insert("barleftarrowrightarrowbar", "arrows.lr.stop");
-        symbol_map.insert("rightleftarrows", "arrows.rl");
-        symbol_map.insert("updownarrows", "arrows.tb");
-        symbol_map.insert("downuparrows", "arrows.bt");
-        symbol_map.insert("rightthreearrows", "arrows.rrr");
-        symbol_map.insert("leftthreearrows", "arrows.lll");
-        symbol_map.insert("rightharpoonup", "harpoon.rt");
-        symbol_map.insert("barrightharpoonup", "harpoon.rt.bar");
-        symbol_map.insert("rightharpoonupbar", "harpoon.rt.stop");
-        symbol_map.insert("rightharpoondown", "harpoon.rb");
-        symbol_map.insert("barrightharpoondown", "harpoon.rb.bar");
-        symbol_map.insert("rightharpoondownbar", "harpoon.rb.stop");
-        symbol_map.insert("leftharpoonup", "harpoon.lt");
-        symbol_map.insert("leftharpoonupbar", "harpoon.lt.bar");
-        symbol_map.insert("barleftharpoonup", "harpoon.lt.stop");
-        symbol_map.insert("leftharpoondown", "harpoon.lb");
-        symbol_map.insert("leftharpoondownbar", "harpoon.lb.bar");
-        symbol_map.insert("barleftharpoondown", "harpoon.lb.stop");
-        symbol_map.insert("upharpoonleft", "harpoon.tl");
-        symbol_map.insert("upharpoonleftbar", "harpoon.tl.bar");
-        symbol_map.insert("barupharpoonleft", "harpoon.tl.stop");
-        symbol_map.insert("upharpoonright", "harpoon.tr");
-        symbol_map.insert("upharpoonrightbar", "harpoon.tr.bar");
-        symbol_map.insert("barupharpoonright", "harpoon.tr.stop");
-        symbol_map.insert("downharpoonleft", "harpoon.bl");
-        symbol_map.insert("bardownharpoonleft", "harpoon.bl.bar");
-        symbol_map.insert("downharpoonleftbar", "harpoon.bl.stop");
-        symbol_map.insert("downharpoonright", "harpoon.br");
-        symbol_map.insert("bardownharpoonright", "harpoon.br.bar");
-        symbol_map.insert("downharpoonrightbar", "harpoon.br.stop");
-        symbol_map.insert("leftrightharpoonupup", "harpoon.lt.rt");
-        symbol_map.insert("leftrightharpoondowndown", "harpoon.lb.rb");
-        symbol_map.insert("leftrightharpoondownup", "harpoon.lb.rt");
-        symbol_map.insert("leftrightharpoonupdown", "harpoon.lt.rb");
-        symbol_map.insert("updownharpoonleftleft", "harpoon.tl.bl");
-        symbol_map.insert("updownharpoonrightright", "harpoon.tr.br");
-        symbol_map.insert("updownharpoonleftright", "harpoon.tl.br");
-        symbol_map.insert("updownharpoonrightleft", "harpoon.tr.bl");
-        symbol_map.insert("rightharpoonsupdown", "harpoons.rtrb");
-        symbol_map.insert("downharpoonsleftright", "harpoons.blbr");
-        symbol_map.insert("downupharpoonsleftright", "harpoons.bltr");
-        symbol_map.insert("leftrightharpoonsdown", "harpoons.lbrb");
-        symbol_map.insert("leftharpoonsupdown", "harpoons.ltlb");
-        symbol_map.insert("leftrightharpoons", "harpoons.ltrb");
-        symbol_map.insert("leftrightharpoonsup", "harpoons.ltrt");
-        symbol_map.insert("rightleftharpoonsdown", "harpoons.rblb");
-        symbol_map.insert("rightleftharpoons", "harpoons.rtlb");
-        symbol_map.insert("rightleftharpoonsup", "harpoons.rtlt");
-        symbol_map.insert("updownharpoonsleftright", "harpoons.tlbr");
-        symbol_map.insert("upharpoonsleftright", "harpoons.tltr");
-        symbol_map.insert("vdash", "tack.r");
-        symbol_map.insert("nvdash", "tack.r.not");
-        symbol_map.insert("vlongdash", "tack.r.long");
-        symbol_map.insert("assert", "tack.r.short");
-        symbol_map.insert("vDash", "tack.r.double");
-        symbol_map.insert("nvDash", "tack.r.double.not");
-        symbol_map.insert("dashv", "tack.l");
-        symbol_map.insert("longdashv", "tack.l.long");
-        symbol_map.insert("shortlefttack", "tack.l.short");
-        symbol_map.insert("Dashv", "tack.l.double");
-        symbol_map.insert("bigbot", "tack.t.big");
-        symbol_map.insert("Vbar", "tack.t.double");
-        symbol_map.insert("shortuptack", "tack.t.short");
-        symbol_map.insert("bigtop", "tack.b.big");
-        symbol_map.insert("barV", "tack.b.double");
-        symbol_map.insert("shortdowntack", "tack.b.short");
-        symbol_map.insert("dashVdash", "tack.l.r");
-        /*
-        symbol_map.insert("mupalpha", "alpha");
-        symbol_map.insert("mupbeta", "beta");
-        symbol_map.insert("mupchi", "chi");
-        symbol_map.insert("mupdelta", "delta");
-        symbol_map.insert("mupvarepsilon", "epsilon");
-        symbol_map.insert("mupepsilon", "epsilon.alt");
-        symbol_map.insert("mupeta", "eta");
-        symbol_map.insert("mupgamma", "gamma");
-        symbol_map.insert("mupiota", "iota");
-        symbol_map.insert("mupkappa", "kappa");
-        symbol_map.insert("mupvarkappa", "kappa.alt");
-        symbol_map.insert("muplambda", "lambda");
-        symbol_map.insert("mupmu", "mu");
-        symbol_map.insert("mupnu", "nu");
-        symbol_map.insert("mho", "ohm.inv");
-        symbol_map.insert("mupomega", "omega");
-        symbol_map.insert("mupomicron", "omicron");
-        symbol_map.insert("mupvarphi", "phi");
-        symbol_map.insert("mupphi", "phi.alt");
-        symbol_map.insert("muppi", "pi");
-        symbol_map.insert("mupvarpi", "pi.alt");
-        symbol_map.insert("muppsi", "psi");
-        symbol_map.insert("muprho", "rho");
-        symbol_map.insert("mupvarrho", "rho.alt");
-        symbol_map.insert("mupsigma", "sigma");
-        symbol_map.insert("mupvarsigma", "sigma.alt");
-        symbol_map.insert("muptau", "tau");
-        symbol_map.insert("muptheta", "theta");
-        symbol_map.insert("mupvartheta", "theta.alt");
-        symbol_map.insert("mupupsilon", "upsilon");
-        symbol_map.insert("mupxi", "xi");
-        symbol_map.insert("mupzeta", "zeta");
-        symbol_map.insert("mupAlpha", "Alpha");
-        symbol_map.insert("mupBeta", "Beta");
-        symbol_map.insert("mupChi", "Chi");
-        symbol_map.insert("mupDelta", "Delta");
-        symbol_map.insert("mupEpsilon", "Epsilon");
-        symbol_map.insert("mupEta", "Eta");
-        symbol_map.insert("mupGamma", "Gamma");
-        symbol_map.insert("mupIota", "Iota");
-        symbol_map.insert("mupKappa", "Kappa");
-        symbol_map.insert("mupLambda", "Lambda");
-        symbol_map.insert("mupMu", "Mu");
-        symbol_map.insert("mupNu", "Nu");
-        symbol_map.insert("mupOmega", "Omega");
-        symbol_map.insert("mupOmicron", "Omicron");
-        symbol_map.insert("mupPhi", "Phi");
-        symbol_map.insert("mupPi", "Pi");
-        symbol_map.insert("mupPsi", "Psi");
-        symbol_map.insert("mupRho", "Rho");
-        symbol_map.insert("mupSigma", "Sigma");
-        symbol_map.insert("mupTau", "Tau");
-        symbol_map.insert("mupTheta", "Theta");
-        symbol_map.insert("mupUpsilon", "Upsilon");
-        symbol_map.insert("mupXi", "Xi");
-        symbol_map.insert("mupZeta", "Zeta");
-        */
-        symbol_map.insert("BbbA", "AA");
-        symbol_map.insert("BbbB", "BB");
-        symbol_map.insert("BbbC", "CC");
-        symbol_map.insert("BbbD", "DD");
-        symbol_map.insert("BbbE", "EE");
-        symbol_map.insert("BbbF", "FF");
-        symbol_map.insert("BbbG", "GG");
-        symbol_map.insert("BbbH", "HH");
-        symbol_map.insert("BbbI", "II");
-        symbol_map.insert("BbbJ", "JJ");
-        symbol_map.insert("BbbK", "KK");
-        symbol_map.insert("BbbL", "LL");
-        symbol_map.insert("BbbM", "MM");
-        symbol_map.insert("BbbN", "NN");
-        symbol_map.insert("BbbO", "OO");
-        symbol_map.insert("BbbP", "PP");
-        symbol_map.insert("BbbQ", "QQ");
-        symbol_map.insert("BbbR", "RR");
-        symbol_map.insert("BbbS", "SS");
-        symbol_map.insert("BbbT", "TT");
-        symbol_map.insert("BbbU", "UU");
-        symbol_map.insert("BbbV", "VV");
-        symbol_map.insert("BbbW", "WW");
-        symbol_map.insert("BbbX", "XX");
-        symbol_map.insert("BbbY", "YY");
-        symbol_map.insert("BbbZ", "ZZ");
-        symbol_map.insert("ell", "ell");
-        symbol_map.insert("Planckconst", "planck");
-        symbol_map.insert("hslash", "planck.reduce");
-        symbol_map.insert("Angstrom", "angstrom");
-        symbol_map.insert("Re", "Re");
-        symbol_map.insert("Im", "Im");
-        symbol_map.insert("imath", "dotless.i");
-        symbol_map.insert("jmath", "dotless.j");
+        "eqdef" => "eq.def",
+        "triangleq" => "eq.delta",
+        "veeeq" => "eq.equi",
+        "wedgeq" => "eq.est",
+        "eqgtr" => "eq.gt",
+        "eqless" => "eq.lt",
+        "measeq" => "eq.m",
+        "ne" => "eq.not",
+        "curlyeqprec" => "eq.prec",
+        "questeq" => "eq.quest",
+        "curlyeqsucc" => "eq.succ",
+        "Equiv" => "eq.quad",
+        "greater" => "gt",
+        "ogreaterthan" => "gt.circle",
+        "gtrdot" => "gt.dot",
+        "gtrapprox" => "gt.approx",
+        "gg" => "gt.double",
+        "geq" => "gt.eq",
+        "geqslant" => "gt.eq.slant",
+        "gtreqless" => "gt.eq.lt",
+        "ngeq" => "gt.eq.not",
+        "geqq" => "gt.equiv",
+        "gtrless" => "gt.lt",
+        "ngtrless" => "gt.lt.not",
+        "gneq" => "gt.neq",
+        "gnapprox" => "gt.napprox",
+        "gneqq" => "gt.nequiv",
+        "ngtr" => "gt.not",
+        "gnsim" => "gt.ntilde",
+        "gtrsim" => "gt.tilde",
+        "ngtrsim" => "gt.tilde.not",
+        "vartriangleright" => "gt.tri",
+        "trianglerighteq" => "gt.tri.eq",
+        "ntrianglerighteq" => "gt.tri.eq.not",
+        "nvartriangleright" => "gt.tri.not",
+        "ggg" => "gt.triple",
+        "gggnest" => "gt.triple.nested",
+        "less" => "lt",
+        "olessthan" => "lt.circle",
+        "lessdot" => "lt.dot",
+        "lessapprox" => "lt.approx",
+        "ll" => "lt.double",
+        "leq" => "lt.eq",
+        "leqslant" => "lt.eq.slant",
+        "lesseqgtr" => "lt.eq.gt",
+        "nleq" => "lt.eq.not",
+        "leqq" => "lt.equiv",
+        "lessgtr" => "lt.gt",
+        "nlessgtr" => "lt.gt.not",
+        "lneq" => "lt.neq",
+        "lnapprox" => "lt.napprox",
+        "lneqq" => "lt.nequiv",
+        "nless" => "lt.not",
+        "lnsim" => "lt.ntilde",
+        "lesssim" => "lt.tilde",
+        "nlesssim" => "lt.tilde.not",
+        "vartriangleleft" => "lt.tri",
+        "trianglelefteq" => "lt.tri.eq",
+        "ntrianglelefteq" => "lt.tri.eq.not",
+        "nvartriangleleft" => "lt.tri.not",
+        "lll" => "lt.triple",
+        "lllnest" => "lt.triple.nested",
+        "approxeq" => "approx.eq",
+        "napprox" => "approx.not",
+        "prec" => "prec",
+        "precapprox" => "prec.approx",
+        "preccurlyeq" => "prec.curly.eq",
+        "npreccurlyeq" => "prec.curly.eq.not",
+        "Prec" => "prec.double",
+        "preceq" => "prec.eq",
+        "preceqq" => "prec.equiv",
+        "precnapprox" => "prec.napprox",
+        "precneq" => "prec.neq",
+        "precneqq" => "prec.nequiv",
+        "nprec" => "prec.not",
+        "precnsim" => "prec.ntilde",
+        "precsim" => "prec.tilde",
+        "succ" => "succ",
+        "succapprox" => "succ.approx",
+        "succcurlyeq" => "succ.curly.eq",
+        "nsucccurlyeq" => "succ.curly.eq.not",
+        "Succ" => "succ.double",
+        "succeq" => "succ.eq",
+        "succeqq" => "succ.equiv",
+        "succnapprox" => "succ.napprox",
+        "succneq" => "succ.neq",
+        "succneqq" => "succ.nequiv",
+        "nsucc" => "succ.not",
+        "succnsim" => "succ.ntilde",
+        "succsim" => "succ.tilde",
+        "nequiv" => "equiv.not",
+        "propto" => "prop",
+        "origof" => "original",
+        "imageof" => "image",
+        "varnothing" => "emptyset",
+        "emptysetoarr" => "emptyset.arrow.r",
+        "emptysetoarrl" => "emptyset.arrow.l",
+        "emptysetobar" => "emptyset.bar",
+        "emptysetocirc" => "emptyset.circle",
+        "revemptyset" => "emptyset.rev",
+        "setminus" => "without",
+        "complement" => "complement",
+        "in" => "in",
+        "notin" => "in.not",
+        "ni" => "in.rev",
+        "nni" => "in.rev.not",
+        "smallni" => "in.rev.small",
+        "smallin" => "in.small",
+        "subset" => "subset",
+        "subsetdot" => "subset.dot",
+        "Subset" => "subset.double",
+        "subseteq" => "subset.eq",
+        "nsubseteq" => "subset.eq.not",
+        "sqsubseteq" => "subset.eq.sq",
+        "nsqsubseteq" => "subset.eq.sq.not",
+        "subsetneq" => "subset.neq",
+        "nsubset" => "subset.not",
+        "sqsubset" => "subset.sq",
+        "sqsubsetneq" => "subset.sq.neq",
+        "supset" => "supset",
+        "supsetdot" => "supset.dot",
+        "Supset" => "supset.double",
+        "supseteq" => "supset.eq",
+        "nsupseteq" => "supset.eq.not",
+        "sqsupseteq" => "supset.eq.sq",
+        "nsqsupseteq" => "supset.eq.sq.not",
+        "supsetneq" => "supset.neq",
+        "nsupset" => "supset.not",
+        "sqsupset" => "supset.sq",
+        "sqsupsetneq" => "supset.sq.neq",
+        "cup" => "union",
+        "cupleftarrow" => "union.arrow",
+        "bigcup" => "union.big",
+        "cupdot" => "union.dot",
+        "bigcupdot" => "union.dot.big",
+        "Cup" => "union.double",
+        "uminus" => "union.minus",
+        "cupvee" => "union.or",
+        "uplus" => "union.plus",
+        "biguplus" => "union.plus.big",
+        "sqcup" => "union.sq",
+        "bigsqcup" => "union.sq.big",
+        "Sqcup" => "union.sq.double",
+        "cap" => "sect",
+        "capwedge" => "sect.and",
+        "bigcap" => "sect.big",
+        "capdot" => "sect.dot",
+        "Cap" => "sect.double",
+        "sqcap" => "sect.sq",
+        "bigsqcap" => "sect.sq.big",
+        "Sqcap" => "sect.sq.double",
+        "infty" => "infinity",
+        "nvinfty" => "infinity.bar",
+        "iinfin" => "infinity.incomplete",
+        "tieinfty" => "infinity.tie",
+        "partial" => "diff",
+        "nabla" => "gradient",
+        "sum" => "sum",
+        "sumint" => "sum.integral",
+        "prod" => "product",
+        "coprod" => "product.co",
+        "int" => "integral",
+        "intlarhk" => "integral.arrow.hook",
+        "awint" => "integral.ccw",
+        "oint" => "integral.cont",
+        "ointctrclockwise" => "integral.cont.ccw",
+        "varointclockwise" => "integral.cont.cw",
+        "intclockwise" => "integral.cw",
+        "intbar" => "integral.dash",
+        "intBar" => "integral.dash.double",
+        "iint" => "integral.double",
+        "iiiint" => "integral.quad",
+        "intcap" => "integral.sect",
+        "fint" => "integral.slash",
+        "sqint" => "integral.square",
+        "oiint" => "integral.surf",
+        "intx" => "integral.times",
+        "iiint" => "integral.triple",
+        "intcup" => "integral.union",
+        "oiiint" => "integral.vol",
+        "increment" => "laplace",
+        "forall" => "forall",
+        "exists" => "exists",
+        "nexists" => "exists.not",
+        "bot" => "bot",
+        "neg" => "not",
+        "bigwedge" => "and.big",
+        "curlywedge" => "and.curly",
+        "wedgedot" => "and.dot",
+        "Wedge" => "and.double",
+        "bigvee" => "or.big",
+        "curlyvee" => "or.curly",
+        "veedot" => "or.dot",
+        "Vee" => "or.double",
+        "models" => "models",
+        "Vdash" => "forces",
+        "nVdash" => "forces.not",
+        "therefore" => "therefore",
+        "because" => "because",
+        "QED" => "qed",
+        "vysmwhtcircle" => "compose",
+        "multimap" => "multimap",
+        "dualmap" => "multimap.double",
+        "tplus" => "tiny",
+        "tminus" => "miny",
+        "mid" => "divides",
+        "nmid" => "divides.not",
+        "wr" => "wreath",
+        "parallel" => "parallel",
+        "nhpar" => "parallel.struck",
+        "circledparallel" => "parallel.circle",
+        "equalparallel" => "parallel.eq",
+        "equivVert" => "parallel.equiv",
+        "nparallel" => "parallel.not",
+        "eparsl" => "parallel.slanted.eq",
+        "smeparsl" => "parallel.slanted.eq.tilde",
+        "eqvparsl" => "parallel.slanted.equiv",
+        "parsim" => "parallel.tilde",
+        "perp" => "perp",
+        "operp" => "perp.circle",
+        "diameter" => "diameter",
+        "Join" => "join",
+        "rightouterjoin" => "join.r",
+        "leftouterjoin" => "join.l",
+        "fullouterjoin" => "join.l.r",
+        "smashtimes" => "smash",
+        "mathdollar" => "dollar",
+        "euro" => "euro",
+        "mathsterling" => "pound",
+        "mathyen" => "yen",
+        "checkmark" => "checkmark",
+        "maltese" => "maltese",
+        "clubsuit" => "suit.club.filled",
+        "varclubsuit" => "suit.club.stroked",
+        "vardiamondsuit" => "suit.diamond.filled",
+        "diamondsuit" => "suit.diamond.stroked",
+        "varheartsuit" => "suit.heart.filled",
+        "heartsuit" => "suit.heart.stroked",
+        "spadesuit" => "suit.spade.filled",
+        "varspadesuit" => "suit.spade.stroked",
+        "quarternote" => "note.quarter.alt",
+        "eighthnote" => "note.eighth.alt",
+        "twonotes" => "note.eighth.beamed",
+        "natural" => "natural",
+        "flat" => "flat",
+        "sharp" => "sharp",
+        "smblkcircle" => "bullet",
+        "mdlgwhtcircle" => "circle.stroked",
+        "mdsmwhtcircle" => "circle.stroked.small",
+        "lgwhtcircle" => "circle.stroked.big",
+        "mdlgblkcircle" => "circle.filled",
+        "mdsmblkcircle" => "circle.filled.tiny",
+        "vysmblkcircle" => "circle.filled.small",
+        "lgblkcircle" => "circle.filled.big",
+        "dottedcircle" => "circle.dotted",
+        "circledcirc" => "circle.nested",
+        "whthorzoval" => "ellipse.stroked.h",
+        "whtvertoval" => "ellipse.stroked.v",
+        "blkhorzoval" => "ellipse.filled.h",
+        "blkvertoval" => "ellipse.filled.v",
+        "bigtriangleup" => "triangle.stroked.t",
+        "bigtriangledown" => "triangle.stroked.b",
+        "triangleright" => "triangle.stroked.r",
+        "triangleleft" => "triangle.stroked.l",
+        "lltriangle" => "triangle.stroked.bl",
+        "lrtriangle" => "triangle.stroked.br",
+        "ultriangle" => "triangle.stroked.tl",
+        "urtriangle" => "triangle.stroked.tr",
+        "vartriangle" => "triangle.stroked.small.t",
+        "triangledown" => "triangle.stroked.small.b",
+        "smalltriangleright" => "triangle.stroked.small.r",
+        "smalltriangleleft" => "triangle.stroked.small.l",
+        "whiteinwhitetriangle" => "triangle.stroked.nested",
+        "trianglecdot" => "triangle.stroked.dot",
+        "bigblacktriangleup" => "triangle.filled.t",
+        "bigblacktriangledown" => "triangle.filled.b",
+        "blacktriangleright" => "triangle.filled.r",
+        "blacktriangleleft" => "triangle.filled.l",
+        "llblacktriangle" => "triangle.filled.bl",
+        "lrblacktriangle" => "triangle.filled.br",
+        "ulblacktriangle" => "triangle.filled.tl",
+        "urblacktriangle" => "triangle.filled.tr",
+        "blacktriangle" => "triangle.filled.small.t",
+        "blacktriangledown" => "triangle.filled.small.b",
+        "smallblacktriangleright" => "triangle.filled.small.r",
+        "smallblacktriangleleft" => "triangle.filled.small.l",
+        "mdlgwhtsquare" => "square.stroked",
+        "smwhtsquare" => "square.stroked.tiny",
+        "mdsmwhtsquare" => "square.stroked.small",
+        "mdwhtsquare" => "square.stroked.medium",
+        "lgwhtsquare" => "square.stroked.big",
+        "dottedsquare" => "square.stroked.dotted",
+        "squoval" => "square.stroked.rounded",
+        "mdlgblksquare" => "square.filled",
+        "smblksquare" => "square.filled.tiny",
+        "mdsmblksquare" => "square.filled.small",
+        "mdblksquare" => "square.filled.medium",
+        "lgblksquare" => "square.filled.big",
+        "hrectangle" => "rect.stroked.h",
+        "vrectangle" => "rect.stroked.v",
+        "hrectangleblack" => "rect.filled.h",
+        "vrectangleblack" => "rect.filled.v",
+        "pentagon" => "penta.stroked",
+        "pentagonblack" => "penta.filled",
+        "varhexagon" => "hexa.stroked",
+        "varhexagonblack" => "hexa.filled",
+        "mdlgwhtdiamond" => "diamond.stroked",
+        "smwhtdiamond" => "diamond.stroked.small",
+        "mdwhtdiamond" => "diamond.stroked.medium",
+        "diamondcdot" => "diamond.stroked.dot",
+        "mdlgblkdiamond" => "diamond.filled",
+        "mdblkdiamond" => "diamond.filled.medium",
+        "smblkdiamond" => "diamond.filled.small",
+        "mdlgwhtlozenge" => "lozenge.stroked",
+        "smwhtlozenge" => "lozenge.stroked.small",
+        "mdwhtlozenge" => "lozenge.stroked.medium",
+        "mdlgblklozenge" => "lozenge.filled",
+        "smblklozenge" => "lozenge.filled.small",
+        "mdblklozenge" => "lozenge.filled.medium",
+        "parallelogram" => "parallelogram.stroked",
+        "parallelogramblack" => "parallelogram.filled",
+        "star" => "star.op",
+        "bigwhitestar" => "star.stroked",
+        "bigstar" => "star.filled",
+        "rightarrow" => "arrow.r",
+        "longmapsto" => "arrow.r.long.bar",
+        "mapsto" => "arrow.r.bar",
+        "rightdowncurvedarrow" => "arrow.r.curve",
+        "rightdasharrow" => "arrow.r.dashed",
+        "rightdotarrow" => "arrow.r.dotted",
+        "Rightarrow" => "arrow.r.double",
+        "Mapsto" => "arrow.r.double.bar",
+        "Longrightarrow" => "arrow.r.double.long",
+        "Longmapsto" => "arrow.r.double.long.bar",
+        "nRightarrow" => "arrow.r.double.not",
+        "hookrightarrow" => "arrow.r.hook",
+        "longrightarrow" => "arrow.r.long",
+        "longrightsquigarrow" => "arrow.r.long.squiggly",
+        "looparrowright" => "arrow.r.loop",
+        "nrightarrow" => "arrow.r.not",
+        "RRightarrow" => "arrow.r.quad",
+        "rightsquigarrow" => "arrow.r.squiggly",
+        "rightarrowbar" => "arrow.r.stop",
+        "rightwhitearrow" => "arrow.r.stroked",
+        "rightarrowtail" => "arrow.r.tail",
+        "similarrightarrow" => "arrow.r.tilde",
+        "Rrightarrow" => "arrow.r.triple",
+        "twoheadmapsto" => "arrow.r.twohead.bar",
+        "twoheadrightarrow" => "arrow.r.twohead",
+        "rightwavearrow" => "arrow.r.wave",
+        "leftarrow" => "arrow.l",
+        "mapsfrom" => "arrow.l.bar",
+        "leftdowncurvedarrow" => "arrow.l.curve",
+        "leftdasharrow" => "arrow.l.dashed",
+        "leftdotarrow" => "arrow.l.dotted",
+        "Leftarrow" => "arrow.l.double",
+        "Mapsfrom" => "arrow.l.double.bar",
+        "Longleftarrow" => "arrow.l.double.long",
+        "Longmapsfrom" => "arrow.l.double.long.bar",
+        "nLeftarrow" => "arrow.l.double.not",
+        "hookleftarrow" => "arrow.l.hook",
+        "longleftarrow" => "arrow.l.long",
+        "longmapsfrom" => "arrow.l.long.bar",
+        "longleftsquigarrow" => "arrow.l.long.squiggly",
+        "looparrowleft" => "arrow.l.loop",
+        "nleftarrow" => "arrow.l.not",
+        "LLeftarrow" => "arrow.l.quad",
+        "leftsquigarrow" => "arrow.l.squiggly",
+        "barleftarrow" => "arrow.l.stop",
+        "leftwhitearrow" => "arrow.l.stroked",
+        "leftarrowtail" => "arrow.l.tail",
+        "similarleftarrow" => "arrow.l.tilde",
+        "Lleftarrow" => "arrow.l.triple",
+        "twoheadmapsfrom" => "arrow.l.twohead.bar",
+        "twoheadleftarrow" => "arrow.l.twohead",
+        "leftwavearrow" => "arrow.l.wave",
+        "uparrow" => "arrow.t",
+        "mapsup" => "arrow.t.bar",
+        "uprightcurvearrow" => "arrow.t.curve",
+        "updasharrow" => "arrow.t.dashed",
+        "Uparrow" => "arrow.t.double",
+        "UUparrow" => "arrow.t.quad",
+        "baruparrow" => "arrow.t.stop",
+        "upwhitearrow" => "arrow.t.stroked",
+        "Uuparrow" => "arrow.t.triple",
+        "twoheaduparrow" => "arrow.t.twohead",
+        "downarrow" => "arrow.b",
+        "mapsdown" => "arrow.b.bar",
+        "downrightcurvedarrow" => "arrow.b.curve",
+        "downdasharrow" => "arrow.b.dashed",
+        "Downarrow" => "arrow.b.double",
+        "DDownarrow" => "arrow.b.quad",
+        "downarrowbar" => "arrow.b.stop",
+        "downwhitearrow" => "arrow.b.stroked",
+        "Ddownarrow" => "arrow.b.triple",
+        "twoheaddownarrow" => "arrow.b.twohead",
+        "leftrightarrow" => "arrow.l.r",
+        "Leftrightarrow" => "arrow.l.r.double",
+        "Longleftrightarrow" => "arrow.l.r.double.long",
+        "nLeftrightarrow" => "arrow.l.r.double.not",
+        "longleftrightarrow" => "arrow.l.r.long",
+        "nleftrightarrow" => "arrow.l.r.not",
+        "leftrightsquigarrow" => "arrow.l.r.wave",
+        "updownarrow" => "arrow.t.b",
+        "Updownarrow" => "arrow.t.b.double",
+        "nearrow" => "arrow.tr",
+        "Nearrow" => "arrow.tr.double",
+        "hknearrow" => "arrow.tr.hook",
+        "searrow" => "arrow.br",
+        "Searrow" => "arrow.br.double",
+        "hksearrow" => "arrow.br.hook",
+        "nwarrow" => "arrow.tl",
+        "Nwarrow" => "arrow.tl.double",
+        "hknwarrow" => "arrow.tl.hook",
+        "swarrow" => "arrow.bl",
+        "Swarrow" => "arrow.bl.double",
+        "hkswarrow" => "arrow.bl.hook",
+        "nwsearrow" => "arrow.tl.br",
+        "neswarrow" => "arrow.tr.bl",
+        "acwopencirclearrow" => "arrow.ccw",
+        "curvearrowleft" => "arrow.ccw.half",
+        "cwopencirclearrow" => "arrow.cw",
+        "curvearrowright" => "arrow.cw.half",
+        "downzigzagarrow" => "arrow.zigzag",
+        "rightrightarrows" => "arrows.rr",
+        "leftleftarrows" => "arrows.ll",
+        "upuparrows" => "arrows.tt",
+        "downdownarrows" => "arrows.bb",
+        "leftrightarrows" => "arrows.lr",
+        "barleftarrowrightarrowbar" => "arrows.lr.stop",
+        "rightleftarrows" => "arrows.rl",
+        "updownarrows" => "arrows.tb",
+        "downuparrows" => "arrows.bt",
+        "rightthreearrows" => "arrows.rrr",
+        "leftthreearrows" => "arrows.lll",
+        "rightharpoonup" => "harpoon.rt",
+        "barrightharpoonup" => "harpoon.rt.bar",
+        "rightharpoonupbar" => "harpoon.rt.stop",
+        "rightharpoondown" => "harpoon.rb",
+        "barrightharpoondown" => "harpoon.rb.bar",
+        "rightharpoondownbar" => "harpoon.rb.stop",
+        "leftharpoonupbar" => "harpoon.lt.bar",
+        "barleftharpoonup" => "harpoon.lt.stop",
+        "leftharpoondown" => "harpoon.lb",
+        "leftharpoondownbar" => "harpoon.lb.bar",
+        "barleftharpoondown" => "harpoon.lb.stop",
+        "upharpoonleft" => "harpoon.tl",
+        "upharpoonleftbar" => "harpoon.tl.bar",
+        "barupharpoonleft" => "harpoon.tl.stop",
+        "upharpoonright" => "harpoon.tr",
+        "upharpoonrightbar" => "harpoon.tr.bar",
+        "barupharpoonright" => "harpoon.tr.stop",
+        "downharpoonleft" => "harpoon.bl",
+        "bardownharpoonleft" => "harpoon.bl.bar",
+        "downharpoonleftbar" => "harpoon.bl.stop",
+        "downharpoonright" => "harpoon.br",
+        "bardownharpoonright" => "harpoon.br.bar",
+        "downharpoonrightbar" => "harpoon.br.stop",
+        "leftrightharpoonupup" => "harpoon.lt.rt",
+        "leftrightharpoondowndown" => "harpoon.lb.rb",
+        "leftrightharpoondownup" => "harpoon.lb.rt",
+        "leftrightharpoonupdown" => "harpoon.lt.rb",
+        "updownharpoonleftleft" => "harpoon.tl.bl",
+        "updownharpoonrightright" => "harpoon.tr.br",
+        "updownharpoonleftright" => "harpoon.tl.br",
+        "updownharpoonrightleft" => "harpoon.tr.bl",
+        "rightharpoonsupdown" => "harpoons.rtrb",
+        "downharpoonsleftright" => "harpoons.blbr",
+        "downupharpoonsleftright" => "harpoons.bltr",
+        "leftrightharpoonsdown" => "harpoons.lbrb",
+        "leftharpoonsupdown" => "harpoons.ltlb",
+        "leftrightharpoons" => "harpoons.ltrb",
+        "leftrightharpoonsup" => "harpoons.ltrt",
+        "rightleftharpoonsdown" => "harpoons.rblb",
+        "rightleftharpoons" => "harpoons.rtlb",
+        "rightleftharpoonsup" => "harpoons.rtlt",
+        "updownharpoonsleftright" => "harpoons.tlbr",
+        "upharpoonsleftright" => "harpoons.tltr",
+        "vdash" => "tack.r",
+        "nvdash" => "tack.r.not",
+        "vlongdash" => "tack.r.long",
+        "assert" => "tack.r.short",
+        "vDash" => "tack.r.double",
+        "nvDash" => "tack.r.double.not",
+        "dashv" => "tack.l",
+        "longdashv" => "tack.l.long",
+        "shortlefttack" => "tack.l.short",
+        "Dashv" => "tack.l.double",
+        "bigbot" => "tack.t.big",
+        "Vbar" => "tack.t.double",
+        "shortuptack" => "tack.t.short",
+        "bigtop" => "tack.b.big",
+        "barV" => "tack.b.double",
+        "shortdowntack" => "tack.b.short",
+        "dashVdash" => "tack.l.r",
+        "mupalpha" => "alpha",
+        "mupbeta" => "beta",
+        "mupchi" => "chi",
+        "mupdelta" => "delta",
+        "mupvarepsilon" => "epsilon",
+        "mupepsilon" => "epsilon.alt",
+        "mupeta" => "eta",
+        "mupgamma" => "gamma",
+        "mupiota" => "iota",
+        "mupkappa" => "kappa",
+        "mupvarkappa" => "kappa.alt",
+        "muplambda" => "lambda",
+        "mupmu" => "mu",
+        "mupnu" => "nu",
+        "mho" => "ohm.inv",
+        "mupomega" => "omega",
+        "mupomicron" => "omicron",
+        "mupvarphi" => "phi",
+        "mupphi" => "phi.alt",
+        "muppi" => "pi",
+        "mupvarpi" => "pi.alt",
+        "muppsi" => "psi",
+        "muprho" => "rho",
+        "mupvarrho" => "rho.alt",
+        "mupsigma" => "sigma",
+        "mupvarsigma" => "sigma.alt",
+        "muptau" => "tau",
+        "muptheta" => "theta",
+        "mupvartheta" => "theta.alt",
+        "mupupsilon" => "upsilon",
+        "mupxi" => "xi",
+        "mupzeta" => "zeta",
+        "mupAlpha" => "Alpha",
+        "mupBeta" => "Beta",
+        "mupChi" => "Chi",
+        "mupDelta" => "Delta",
+        "mupEpsilon" => "Epsilon",
+        "mupEta" => "Eta",
+        "mupGamma" => "Gamma",
+        "mupIota" => "Iota",
+        "mupKappa" => "Kappa",
+        "mupLambda" => "Lambda",
+        "mupMu" => "Mu",
+        "mupNu" => "Nu",
+        "mupOmega" => "Omega",
+        "mupOmicron" => "Omicron",
+        "mupPhi" => "Phi",
+        "mupPi" => "Pi",
+        "mupPsi" => "Psi",
+        "mupRho" => "Rho",
+        "mupSigma" => "Sigma",
+        "mupTau" => "Tau",
+        "mupTheta" => "Theta",
+        "mupUpsilon" => "Upsilon",
+        "mupXi" => "Xi",
+        "mupZeta" => "Zeta",
+        "BbbA" => "AA",
+        "BbbB" => "BB",
+        "BbbC" => "CC",
+        "BbbD" => "DD",
+        "BbbE" => "EE",
+        "BbbF" => "FF",
+        "BbbG" => "GG",
+        "BbbH" => "HH",
+        "BbbI" => "II",
+        "BbbJ" => "JJ",
+        "BbbK" => "KK",
+        "BbbL" => "LL",
+        "BbbM" => "MM",
+        "BbbN" => "NN",
+        "BbbO" => "OO",
+        "BbbP" => "PP",
+        "BbbQ" => "QQ",
+        "BbbR" => "RR",
+        "BbbS" => "SS",
+        "BbbT" => "TT",
+        "BbbU" => "UU",
+        "BbbV" => "VV",
+        "BbbW" => "WW",
+        "BbbX" => "XX",
+        "BbbY" => "YY",
+        "BbbZ" => "ZZ",
+        "ell" => "ell",
+        "Planckconst" => "planck",
+        "hslash" => "planck.reduce",
+        "Angstrom" => "angstrom",
+        "Re" => "Re",
+        "Im" => "Im",
+        "imath" => "dotless.i",
+        "jmath" => "dotless.j",
 
         // force override
-        symbol_map.insert("top", "top");
-        symbol_map.insert("frac", "frac");
-        symbol_map.insert("tilde", "tilde");
-        symbol_map.insert("hat", "hat");
-        symbol_map.insert("upright", "mathrm");
-        symbol_map.insert("bold", "boldsymbol");
+        "frac" => "frac",
+        "tilde" => "tilde",
+        "hat" => "hat",
+        "upright" => "mathrm",
+        "bold" => "boldsymbol",
 
-        symbol_map.insert("hyph.minus", "\\text{-}");
-
-        symbol_map
-    })
-}
+        "hyph.minus" => "\\text{-}",
+};
