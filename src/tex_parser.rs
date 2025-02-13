@@ -450,12 +450,12 @@ fn pass_expand_custom_tex_macros(
     out_tokens
 }
 
-pub fn parse_tex(tex: &str) -> Result<TexNode, String> {
+pub fn parse_tex(tex: &str, macros_definition: &str) -> Result<TexNode, String> {
     let parser = LatexParser::new(false, false);
     let tokens = tex_tokenizer::tokenize(tex)?;
     parser.parse(tokens)
 }
 
-pub fn expand_macros(tex_tree: TexNode, macros_definition: &str) -> Result<TexNode, String> {
+pub fn expand_macros(tex_tokens: Vec<TexToken>, macros_definition: &str) -> Result<TexNode, String> {
     todo!()
 }

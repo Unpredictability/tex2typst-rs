@@ -49,7 +49,7 @@ pub struct CommandRegistry {
 }
 
 impl CommandRegistry {
-    pub(crate) fn new() -> CommandRegistry {
+    pub fn new() -> CommandRegistry {
         Self::default()
     }
 

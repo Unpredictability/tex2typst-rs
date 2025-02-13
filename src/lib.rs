@@ -48,8 +48,7 @@ pub fn tex2typst(tex: &str) -> Result<String, String> {
 }
 
 pub fn tex2typst_with_macros(tex: &str, macros_definition: &str) -> Result<String, String> {
-    let tex_tree = tex_parser::parse_tex(tex)?;
-    let tex_tree = tex_parser::expand_macros(tex_tree, macros_definition)?;
+    let tex_tree = tex_parser::parse_tex(tex, macros_definition)?;
     let typst_tree = converter::convert_tree(&tex_tree)?;
     let mut writer = typst_writer::TypstWriter::new();
     writer.serialize(&typst_tree)?;
