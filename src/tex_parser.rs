@@ -1,6 +1,5 @@
-use crate::command_registry::CustomMacro;
 use crate::command_registry::{CommandRegistry, CommandType};
-use crate::definitions::TexNodeData::{Array, Sqrt};
+use crate::definitions::TexNodeData::Array;
 use crate::definitions::{TexNode, TexNodeData, TexNodeType, TexSupsubData, TexToken, TexTokenType};
 use crate::map::SYMBOL_MAP;
 use crate::tex_parser_utils::*;
@@ -454,6 +453,3 @@ pub fn parse_tex(tex: &str) -> Result<TexNode, String> {
     parser.parse(tokens)
 }
 
-pub fn expand_macros(tex_tokens: Vec<TexToken>, macros_definition: &str) -> Result<TexNode, String> {
-    todo!()
-}
