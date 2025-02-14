@@ -226,8 +226,103 @@ impl CommandRegistry {
     }
 }
 
-pub fn parse_custom_macros(latex: &str) -> Result<CustomMacro, String> {
+pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
+    let latex: Vec<char> = latex.chars().collect();
+    let pattern: Vec<char> = "\\newcommand".chars().collect();
+    let mut pos = 0;
+    let mut custom_macros: Vec<CustomMacro> = Vec::new();
+
+    while pos < latex.len().saturating_sub(pattern.len()) {
+        if latex[pos..pos + pattern.len()] == pattern[..] {
+            // extract the new command name
+            let new_command_name: String;
+            if !latex[pos] == '{' {
+                return Err("Expecting { after \\newcommand".to_string());
+            }
+            pos += 1;
+            if !latex[pos] == "\\" {
+                return Err("Expecting backslash after {".to_string());
+            }
+            if let Some(right_curly_bracket) = latex[pos..].iter().position(|&c| c == '}') {
+                new_command_name = latex[pos..pos + right_curly_bracket].iter().collect();
+                pos += right_curly_bracket;
+            } else {
+                return Err("Unmatched curly brackets".to_string());
+            }
+
+            // check if there is a specification of number of arguments
+            let num_of_args: usize;
+            pos += 1;
+            if latex[pos] == '[' {
+                pos += 1;
+                if let Some(right_square_bracket) = latex[pos..].iter().position(|&c| c == ']') {
+                    num_of_args = latex[pos..pos + right_square_bracket]
+                        .iter()
+                        .collect::<String>()
+                        .parse::<usize>()
+                        .map_err(|e| e.to_string())?;
+                    if num_of_args > 2 {
+                        return Err("Only unary and binary commands are supported".to_string());
+                    }
+                    pos += right_square_bracket;
+                } else {
+                    return Err("Unmatched square brackets".to_string());
+                }
+            } else {
+                num_of_args = 0;
+            }
+
+            // check if there is a default value for the first argument
+            let default_value: Option<String>;
+            pos += 1;
+            if latex[pos] == '[' {
+                pos += 1;
+                if let Some(right_square_bracket) = latex[pos..].iter().position(|&c| c == ']') {
+                    default_value = latex[pos..pos + right_square_bracket]
+                        .iter()
+                        .collect::<Option<String>>();
+                    pos += right_square_bracket;
+                } else {
+                    return Err("Unmatched square brackets".to_string());
+                }
+            } else {
+                default_value = None;
+            }
+
+            // extract the definition
+            let definition: String;
+            pos += 1;
+            if !latex[pos] == '{' {
+                return Err("Expecting { before the definition".to_string());
+            }
+            pos += 1;
+            if let Some(right_curly_bracket) = latex[pos..].iter().position(|&c| c == '}') {
+                definition = latex[pos..pos + right_curly_bracket].iter().collect();
+                pos += right_curly_bracket;
+            } else {
+                return Err("Unmatched curly brackets".to_string());
+            }
+
+            custom_macros.push(construct_custom_macro(
+                new_command_name,
+                num_of_args,
+                default_value,
+                definition,
+            )?);
+        }
+        pos += 1;
+    }
+
     todo!("idealy, it should accept raw latex \newcommand definitions, but may be hard to parse");
+}
+
+fn construct_custom_macro(
+    new_command_name: String,
+    num_of_args: usize,
+    default_value: Option<String>,
+    definition: String,
+) -> Result<CustomMacro, String> {
+    todo!()
 }
 
 #[cfg(test)]
@@ -296,9 +391,6 @@ mod tests {
 
         let tokens = tokenize(r"\mycommand{a}").unwrap();
         let expanded_tokens = registry.expand_macros(&tokens).unwrap();
-        assert_eq!(
-            expanded_tokens,
-            tokenize(r"\expanded{a}").unwrap(),
-        );
+        assert_eq!(expanded_tokens, tokenize(r"\expanded{a}").unwrap(),);
     }
 }
