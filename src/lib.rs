@@ -2,15 +2,15 @@ use crate::command_registry::{parse_custom_macros, CommandRegistry};
 use crate::tex_parser::LatexParser;
 use regex::{Captures, Regex};
 
-mod command_registry;
-mod converter;
-mod definitions;
-mod map;
+pub mod command_registry;
+pub mod converter;
+pub mod definitions;
+pub mod map;
+pub mod tex_parser;
+pub mod tex_parser_utils;
+pub mod tex_tokenizer;
+pub mod typst_writer;
 mod tests;
-mod tex_parser;
-mod tex_parser_utils;
-mod tex_tokenizer;
-mod typst_writer;
 
 /// Converts a given TeX string to a Typst string.
 ///
