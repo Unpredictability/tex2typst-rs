@@ -1,3 +1,4 @@
+use crate::command_registry::{parse_custom_macros, CommandRegistry};
 use crate::tex_parser::LatexParser;
 use regex::{Captures, Regex};
 
@@ -48,11 +49,17 @@ pub fn tex2typst(tex: &str) -> Result<String, String> {
     Ok(typst)
 }
 
-pub fn tex2typst_with_macros(tex: &str, macros_definition: &str) -> Result<String, String> {
+pub fn tex2typst_with_macros(tex: &str, macro_definitions: &str) -> Result<String, String> {
     let parser = LatexParser::new(false, false);
     let tokens = tex_tokenizer::tokenize(tex)?;
-    let tex_tree = parser.parse(tokens)?;
+    let custom_macros = parse_custom_macros(macro_definitions)?;
+    let mut registry = CommandRegistry::new();
+    registry.register_custom_macros(custom_macros);
+    let expanded_tokens = registry.expand_macros(&tokens)?;
+
+    let tex_tree = parser.parse(expanded_tokens)?;
     let typst_tree = converter::convert_tree(&tex_tree)?;
+
     let mut writer = typst_writer::TypstWriter::new();
     writer.serialize(&typst_tree)?;
     let typst = writer.finalize()?;

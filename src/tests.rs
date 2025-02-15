@@ -2,11 +2,11 @@
 
 #[cfg(test)]
 mod tests {
+    use crate::tex_parser::parse_tex;
     use crate::{converter, tex2typst, tex2typst_with_macros, tex_parser, text_and_tex2typst, typst_writer};
     use std::collections::HashMap;
     use std::error::Error;
     use std::result;
-    use crate::tex_parser::parse_tex;
 
     #[test]
     fn simple_test() {
@@ -104,5 +104,27 @@ mod tests {
 
         let mixed = r"some text and some formula: \(\frac{1}{2}\)";
         println!("{}", text_and_tex2typst(mixed).unwrap());
+    }
+}
+
+#[cfg(test)]
+mod test_custom_macros {
+    use crate::{tex2typst_with_macros, tex_parser};
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_custom_macros() {
+        let tex = r"\d^2";
+        let custom_macros = r"\newcommand{\d}{\partial}";
+        let result = tex2typst_with_macros(tex, custom_macros).unwrap();
+        assert_eq!(result, "diff^2");
+    }
+
+    #[test]
+    fn test_custom_macros_with_args() {
+        let custom_macros = r"\newcommand{\pp}[2][]{\frac{\partial #1}{\partial #2}}";
+        let tex = r"\pp[f]{x} \pp{y}";
+        let result = tex2typst_with_macros(tex, custom_macros).unwrap();
+        assert_eq!(result, "(diff f)/(diff x) diff/(diff y)");
     }
 }
