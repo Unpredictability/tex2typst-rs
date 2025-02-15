@@ -8,7 +8,7 @@ const TYPST_INTRINSIC_SYMBOLS: &[&str] = &[
     // "sgn"
 ];
 
-pub(crate) fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
+pub fn convert_tree(node: &TexNode) -> Result<TypstNode, String> {
     match node.node_type {
         TexNodeType::Empty => Ok(TypstNode::new(TypstNodeType::Empty, String::from(""), None, None)),
         TexNodeType::Whitespace => Ok(TypstNode::new(
