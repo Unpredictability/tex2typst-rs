@@ -3,7 +3,7 @@ use std::collections::HashMap;
 // Control: {, }, _, ^, &, \
 // Element: [, ],
 #[derive(Debug, PartialEq, Clone)]
-pub(crate) enum TexTokenType {
+pub enum TexTokenType {
     Element,
     Command,
     Text,
@@ -16,13 +16,13 @@ pub(crate) enum TexTokenType {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub(crate) struct TexToken {
-    pub(crate) token_type: TexTokenType,
-    pub(crate) value: String,
+pub struct TexToken {
+    pub token_type: TexTokenType,
+    pub value: String,
 }
 
 impl TexToken {
-    pub(crate) fn new(token_type: TexTokenType, value: String) -> Self {
+    pub fn new(token_type: TexTokenType, value: String) -> Self {
         TexToken { token_type, value }
     }
 }
@@ -37,7 +37,7 @@ type TexArrayData = Vec<Vec<TexNode>>;
 // empty: special type when something is empty. e.g. the base of _{a} or ^{a}
 // whitespace: space, tab, newline
 #[derive(Debug, PartialEq, Clone)]
-pub(crate) enum TexNodeType {
+pub enum TexNodeType {
     Element,
     Text,
     Comment,
@@ -58,28 +58,28 @@ pub(crate) enum TexNodeType {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub(crate) struct TexNode {
-    pub(crate) node_type: TexNodeType,
-    pub(crate) content: String,
-    pub(crate) args: Option<Vec<TexNode>>,   // when node_type is Command, args is the parameters
-    pub(crate) data: Option<Box<TexNodeData>>,  // for stuff like begin-end, array, etc.
+pub struct TexNode {
+    pub node_type: TexNodeType,
+    pub content: String,
+    pub args: Option<Vec<TexNode>>,   // when node_type is Command, args is the parameters
+    pub data: Option<Box<TexNodeData>>,  // for stuff like begin-end, array, etc.
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub(crate) enum TexNodeData {
+pub enum TexNodeData {
     Supsub(TexSupsubData),
     Array(TexArrayData),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct TexSupsubData {
-    pub(crate) base: TexNode,
-    pub(crate) sup: Option<TexNode>,
-    pub(crate) sub: Option<TexNode>,
+pub struct TexSupsubData {
+    pub base: TexNode,
+    pub sup: Option<TexNode>,
+    pub sub: Option<TexNode>,
 }
 
 impl TexNode {
-    pub(crate) fn new(
+    pub fn new(
         node_type: TexNodeType,
         content: String,
         args: Option<Vec<TexNode>>,
@@ -95,7 +95,7 @@ impl TexNode {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub(crate) enum TypstTokenType {
+pub enum TypstTokenType {
     Symbol,
     Element,
     Text,
@@ -104,7 +104,7 @@ pub(crate) enum TypstTokenType {
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum TypstNodeType {
+pub enum TypstNodeType {
     Atom,
     Symbol,
     Text,
@@ -122,17 +122,17 @@ pub(crate) enum TypstNodeType {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub(crate) struct TypstToken {
-    pub(crate) token_type: TypstTokenType,
-    pub(crate) value: String,
+pub struct TypstToken {
+    pub token_type: TypstTokenType,
+    pub value: String,
 }
 
 impl TypstToken {
-    pub(crate) fn new(token_type: TypstTokenType, value: String) -> Self {
+    pub fn new(token_type: TypstTokenType, value: String) -> Self {
         TypstToken { token_type, value }
     }
 
-    pub(crate) fn to_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         match self.token_type {
             TypstTokenType::Text => format!("\"{}\"", self.value),
             TypstTokenType::Comment => format!("//{}", self.value),
@@ -142,16 +142,16 @@ impl TypstToken {
 }
 
 #[derive(Debug)]
-pub(crate) struct TypstNode {
-    pub(crate) node_type: TypstNodeType,
-    pub(crate) content: String,
-    pub(crate) args: Option<Vec<TypstNode>>,
-    pub(crate) data: Option<Box<TypstNodeData>>,
-    pub(crate) options: Option<TypstNamedParams>,
+pub struct TypstNode {
+    pub node_type: TypstNodeType,
+    pub content: String,
+    pub args: Option<Vec<TypstNode>>,
+    pub data: Option<Box<TypstNodeData>>,
+    pub options: Option<TypstNamedParams>,
 }
 
 impl TypstNode {
-    pub(crate) fn new(
+    pub fn new(
         node_type: TypstNodeType,
         content: String,
         args: Option<Vec<TypstNode>>,
@@ -166,7 +166,7 @@ impl TypstNode {
         }
     }
 
-    pub(crate) fn set_options(&mut self, options: TypstNamedParams) {
+    pub fn set_options(&mut self, options: TypstNamedParams) {
         self.options = Some(options);
     }
 }
@@ -177,19 +177,19 @@ impl PartialEq for TypstNode {
     }
 }
 
-pub(crate) type TypstNamedParams = HashMap<String, String>;
+pub type TypstNamedParams = HashMap<String, String>;
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum TypstNodeData {
+pub enum TypstNodeData {
     Supsub(TypstSupsubData),
     Array(TypstArrayData),
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct TypstSupsubData {
-    pub(crate) base: TypstNode,
-    pub(crate) sup: Option<TypstNode>,
-    pub(crate) sub: Option<TypstNode>,
+pub struct TypstSupsubData {
+    pub base: TypstNode,
+    pub sup: Option<TypstNode>,
+    pub sub: Option<TypstNode>,
 }
 
 type TypstArrayData = Vec<Vec<TypstNode>>;
