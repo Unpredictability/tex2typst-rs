@@ -1,4 +1,5 @@
 use crate::definitions::{TexNode, TexToken, TexTokenType};
+use crate::tex_tokenizer::tokenize;
 use std::collections::HashMap;
 
 pub const UNARY_COMMANDS: &[&'static str] = &[
@@ -33,9 +34,11 @@ pub const UNARY_COMMANDS: &[&'static str] = &[
     "floor", // This is a custom macro
 ];
 
-pub const OPTION_BINARY_COMMANDS: &[&'static str] = &["sqrt"];
-
 pub const BINARY_COMMANDS: &[&'static str] = &["frac", "tfrac", "binom", "dbinom", "dfrac", "tbinom", "overset"];
+
+pub const OPTION_UNARY_COMMANDS: &[&'static str] = &[];
+
+pub const OPTION_BINARY_COMMANDS: &[&'static str] = &["sqrt"];
 
 pub type ExpandResult = Result<(Vec<TexToken>, usize), String>;
 
@@ -44,13 +47,14 @@ pub enum CommandType {
     Symbol,
     Unary,
     Binary,
+    OptionalUnary,
     OptionalBinary,
 }
 
 pub struct CustomMacro {
     pub name: String,
     pub command_type: CommandType,
-    pub implementation: Box<dyn Fn(&Vec<Vec<TexToken>>) -> Vec<TexToken>>,
+    pub implementation: Box<dyn Fn(&Vec<Vec<TexToken>>) -> Result<Vec<TexToken>, String>>,
 }
 
 #[derive(Default)]
@@ -68,7 +72,7 @@ impl CommandRegistry {
         &mut self,
         name: &str,
         command_type: CommandType,
-        implementation: Box<dyn Fn(&Vec<Vec<TexToken>>) -> Vec<TexToken>>,
+        implementation: Box<dyn Fn(&Vec<Vec<TexToken>>) -> Result<Vec<TexToken>, String>>,
     ) {
         self.custom_macros.push(CustomMacro {
             name: name.to_string(),
@@ -171,6 +175,39 @@ impl CommandRegistry {
                 }
                 pos += 1;
             }
+            CommandType::OptionalUnary => {
+                match tokens[pos].value.as_str() {
+                    "[" => {
+                        // one optional argument
+                        pos += 1;
+                        if let Some(right_square_bracket) = tokens[pos..].iter().position(|token| token.value == "]") {
+                            let new_pos = pos + right_square_bracket;
+                            let optional_argument: &[TexToken] = &tokens[pos..new_pos];
+                            arguments.push(self.expand_macros(optional_argument)?);
+                            pos = new_pos;
+                        } else {
+                            return Err(format!("Unmatched right square brackets for command {}", command_name));
+                        }
+                    }
+                    _ => {
+                        // no given optional argument, will use the default value
+                    }
+                };
+                pos += 1;
+
+                if !tokens[pos].value.eq("{") {
+                    return Err(format!("Expecting mandatory argument for command {}", command_name));
+                }
+                pos += 1;
+                if let Some(right_curly_bracket) = tokens[pos..].iter().position(|token| token.value == "}") {
+                    let new_pos = pos + right_curly_bracket;
+                    let mandatory_argument: &[TexToken] = &tokens[pos..new_pos];
+                    arguments.push(self.expand_macros(mandatory_argument)?);
+                    pos = new_pos;
+                } else {
+                    return Err(format!("Unmatched curly brackets for command {}", command_name));
+                }
+            }
             CommandType::OptionalBinary => {
                 match tokens[pos].value.as_str() {
                     "[" => {
@@ -221,7 +258,7 @@ impl CommandRegistry {
             }
         }
 
-        let expanded_tokens = (custom_macro.implementation)(&arguments);
+        let expanded_tokens = (custom_macro.implementation)(&arguments)?;
         Ok((expanded_tokens, pos))
     }
 }
@@ -313,7 +350,7 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
         pos += 1;
     }
 
-    todo!("idealy, it should accept raw latex \newcommand definitions, but may be hard to parse");
+    Ok(custom_macros)
 }
 
 fn construct_custom_macro(
@@ -322,7 +359,37 @@ fn construct_custom_macro(
     default_value: Option<String>,
     definition: String,
 ) -> Result<CustomMacro, String> {
-    todo!()
+    let implementation: Box<dyn Fn(&Vec<Vec<TexToken>>) -> Result<Vec<TexToken>, String>>;
+
+    if let Some(default_value) = default_value {
+        // one optional argument
+        if num_of_args == 0 {
+            return Err("Default value provided for a command with no arguments".to_string());
+        }
+        todo!()
+    } else {
+        // no default value,
+        match num_of_args {
+            0 => {
+                implementation = Box::new(|_| tokenize(&definition));
+            }
+            1 => {
+                implementation = Box::new(|args: &Vec<Vec<TexToken>>| todo!());
+            }
+            2 => {
+                implementation = Box::new(|_| todo!());
+            }
+            _ => {
+                return Err("Only unary and binary commands are supported".to_string());
+            }
+        }
+    }
+
+    Ok(CustomMacro {
+        name: new_command_name,
+        command_type: CommandType::Unary,
+        implementation,
+    })
 }
 
 #[cfg(test)]
