@@ -1,4 +1,4 @@
-use crate::definitions::{TexNode, TexToken, TexTokenType};
+use crate::definitions::{TexToken, TexTokenType};
 use crate::tex_tokenizer::tokenize;
 use std::collections::HashMap;
 
