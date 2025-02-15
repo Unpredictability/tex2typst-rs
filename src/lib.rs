@@ -50,13 +50,13 @@ pub fn tex2typst(tex: &str) -> Result<String, String> {
 }
 
 pub fn tex2typst_with_macros(tex: &str, macro_definitions: &str) -> Result<String, String> {
-    let parser = LatexParser::new(false, false);
     let tokens = tex_tokenizer::tokenize(tex)?;
     let custom_macros = parse_custom_macros(macro_definitions)?;
     let mut registry = CommandRegistry::new();
     registry.register_custom_macros(custom_macros);
     let expanded_tokens = registry.expand_macros(&tokens)?;
 
+    let parser = LatexParser::new(false, false);
     let tex_tree = parser.parse(expanded_tokens)?;
     let typst_tree = converter::convert_tree(&tex_tree)?;
 
