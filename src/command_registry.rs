@@ -59,8 +59,8 @@ pub struct CustomMacro {
 
 #[derive(Default)]
 pub struct CommandRegistry {
-    custom_macros: Vec<CustomMacro>,
-    custom_macro_names: HashMap<String, CommandType>,
+    pub custom_macros: Vec<CustomMacro>,
+    pub custom_macro_names: HashMap<String, CommandType>,
 }
 
 impl CommandRegistry {
@@ -181,7 +181,16 @@ impl CommandRegistry {
                 pos += 1;
             }
             CommandType::OptionalUnary => {
-                match tokens[pos].value.as_str() {
+                let s;
+                match tokens.get(pos) {
+                    None => {
+                        return Err(format!("Expecting optional argument for command {}", command_name));
+                    }
+                    Some(token) => {
+                        s = token.value.as_str();
+                    }
+                }
+                match s {
                     "[" => {
                         // one optional argument
                         pos += 1;
@@ -200,6 +209,15 @@ impl CommandRegistry {
                 };
             }
             CommandType::OptionalBinary => {
+                let s;
+                match tokens.get(pos) {
+                    None => {
+                        return Err(format!("Expecting optional argument for command {}", command_name));
+                    }
+                    Some(token) => {
+                        s = token.value.as_str();
+                    }
+                }
                 match tokens[pos].value.as_str() {
                     "[" => {
                         // one optional argument, one mandatory argument
@@ -214,7 +232,7 @@ impl CommandRegistry {
                             return Err(format!("Unmatched square brackets for command {}", command_name));
                         }
 
-                        if !tokens[pos].value.eq("{") {
+                        if tokens.get(pos).map(|token| token.value.as_str()) != Some("{") {
                             return Err(format!(
                                 "Expecting the mandatory argument after the optional argument for command {}",
                                 command_name
@@ -313,12 +331,12 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
             pos += pattern_len;
             // extract the new command name
             let new_command_name: String;
-            if latex[pos] != '{' {
+            if latex.get(pos) != Some(&'{') {
                 return Err("Expecting { after \\newcommand".to_string());
             }
             pos += 1;
-            if latex[pos] != '\\' {
-                return Err("Expecting backslash after {".to_string());
+            if latex.get(pos) != Some(&'\\') {
+                return Err("Expecting backslash for command name after {".to_string());
             }
             if let Some(right_curly_bracket_pos) = find_matching_right_curly_bracket_char(&latex, pos) {
                 new_command_name = latex[pos..right_curly_bracket_pos].iter().collect();
@@ -330,7 +348,7 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
             // check if there is a specification of number of arguments
             let num_of_args: usize;
             pos += 1;
-            if latex[pos] == '[' {
+            if latex.get(pos) == Some(&'[') {
                 pos += 1;
                 if let Some(right_square_bracket) = latex[pos..].iter().position(|&c| c == ']') {
                     num_of_args = latex[pos..pos + right_square_bracket]
@@ -352,7 +370,7 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
 
             // check if there is a default value for the first argument
             let default_value: Option<String>;
-            if latex[pos] == '[' {
+            if latex.get(pos) == Some(&'[') {
                 pos += 1;
                 if let Some(right_square_bracket) = latex[pos..].iter().position(|&c| c == ']') {
                     default_value = Some(latex[pos..pos + right_square_bracket].iter().collect::<String>());
@@ -367,7 +385,7 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
 
             // extract the definition
             let definition: String;
-            if latex[pos] != '{' {
+            if latex.get(pos) != Some(&'{') {
                 return Err("Expecting { before the definition".to_string());
             }
             pos += 1;
@@ -386,6 +404,10 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
             )?);
         }
         pos += 1;
+    }
+
+    if custom_macros.is_empty() && latex.len() > 0 {
+        return Err("No custom macros found".to_string());
     }
 
     Ok(custom_macros)
@@ -692,5 +714,20 @@ mod tests {
         let tokens = tokenize(tex).unwrap();
         let expanded_tokens = registry.expand_macros(&tokens).unwrap();
         assert_eq!(expanded_tokens, tokenize(r"\texttt{sym} \expanded{a} \expanded{a}\and{b} \expanded{def1} \expanded{a} \expanded{def2}\and{b} \expanded{a}\and{b}").unwrap());
+    }
+
+    #[test]
+    fn test_error_handling() {
+        let macro_string = r"\newcommand{\pp}[2][]{\expanded{#1}{#2}}";
+        let tex = r"\pp[f]{x}";
+
+        let custom_macros = parse_custom_macros(macro_string);
+        // assert!(custom_macros.is_err());
+
+        let mut registry = CommandRegistry::new();
+        registry.register_custom_macros(custom_macros.unwrap());
+        let tokens = tokenize(tex).unwrap();
+        let expaned = registry.expand_macros(&tokens).unwrap();
+        dbg!(expaned);
     }
 }

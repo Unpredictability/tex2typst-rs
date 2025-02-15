@@ -108,7 +108,7 @@ pub fn text_and_tex2typst(input: &str) -> Result<String, String> {
     })
 }
 
-fn replace_all<E>(
+pub fn replace_all<E>(
     re: &Regex,
     haystack: &str,
     replacement: impl Fn(&Captures) -> Result<String, E>,
