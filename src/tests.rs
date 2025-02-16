@@ -127,4 +127,12 @@ mod test_custom_macros {
         let result = tex2typst_with_macros(tex, custom_macros).unwrap();
         assert_eq!(result, "(diff f)/(diff x) diff/(diff y)");
     }
+
+    #[test]
+    fn test_convoluted_square_brackets() {
+        let custom_macros = r"\newcommand{\pp}[2][]{\frac{\partial #1}{\partial #2}}";
+        let tex = r"\pp[f[x]]{y}";
+        let result = tex2typst_with_macros(tex, custom_macros).unwrap();
+        assert_eq!(result, "(diff f [x])/(diff y)");
+    }
 }
