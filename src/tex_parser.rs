@@ -426,30 +426,8 @@ impl LatexParser {
     }
 }
 
-fn pass_expand_custom_tex_macros(
-    tokens: Vec<TexToken>,
-    custom_tex_macros: &std::collections::HashMap<String, String>,
-) -> Vec<TexToken> {
-    let mut out_tokens: Vec<TexToken> = Vec::new();
-    for token in tokens {
-        if token.token_type == TexTokenType::Command {
-            if let Some(expansion) = custom_tex_macros.get(&token.value) {
-                if let Ok(expanded_tokens) = tex_tokenizer::tokenize(expansion) {
-                    out_tokens.extend(expanded_tokens);
-                }
-            } else {
-                out_tokens.push(token);
-            }
-        } else {
-            out_tokens.push(token);
-        }
-    }
-    out_tokens
-}
-
 pub fn parse_tex(tex: &str) -> Result<TexNode, String> {
     let parser = LatexParser::new(false, false);
     let tokens = tex_tokenizer::tokenize(tex)?;
     parser.parse(tokens)
 }
-

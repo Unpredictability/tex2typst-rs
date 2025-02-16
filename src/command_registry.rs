@@ -194,11 +194,10 @@ impl CommandRegistry {
                     "[" => {
                         // one optional argument
                         pos += 1;
-                        if let Some(right_square_bracket) = tokens[pos..].iter().position(|token| token.value == "]") {
-                            let new_pos = pos + right_square_bracket;
-                            let optional_argument: &[TexToken] = &tokens[pos..new_pos];
+                        if let Some(right_square_bracket) = find_matching_right_square_bracket_token(tokens, pos) {
+                            let optional_argument: &[TexToken] = &tokens[pos..right_square_bracket];
                             arguments.push(self.expand_macros(optional_argument)?);
-                            pos = new_pos + 1;
+                            pos = right_square_bracket + 1;
                         } else {
                             return Err(format!("Unmatched right square brackets for command {}", command_name));
                         }
@@ -222,11 +221,10 @@ impl CommandRegistry {
                     "[" => {
                         // one optional argument, one mandatory argument
                         pos += 1;
-                        if let Some(right_square_bracket) = tokens[pos..].iter().position(|token| token.value == "]") {
-                            let new_pos = pos + right_square_bracket;
-                            let optional_argument: &[TexToken] = &tokens[pos..new_pos];
+                        if let Some(right_square_bracket) = find_matching_right_square_bracket_token(tokens, pos) {
+                            let optional_argument: &[TexToken] = &tokens[pos..right_square_bracket];
                             arguments.push(self.expand_macros(optional_argument)?);
-                            pos = new_pos;
+                            pos = right_square_bracket;
                             pos += 1;
                         } else {
                             return Err(format!("Unmatched square brackets for command {}", command_name));
@@ -296,6 +294,29 @@ fn find_matching_right_curly_bracket_token(tokens: &[TexToken], start: usize) ->
     Some(pos - 1)
 }
 
+fn find_matching_right_square_bracket_token(tokens: &[TexToken], start: usize) -> Option<usize> {
+    let mut count = 1;
+    let mut pos = start;
+
+    while count > 0 {
+        if pos >= tokens.len() {
+            return None;
+        }
+        if pos + 1 < tokens.len() && tokens[pos].value == "\\" && tokens[pos + 1].value == "]" {
+            pos += 2;
+            continue;
+        }
+        match tokens[pos].value.as_str() {
+            "[" => count += 1,
+            "]" => count -= 1,
+            _ => {}
+        }
+        pos += 1;
+    }
+
+    Some(pos - 1)
+}
+
 fn find_matching_right_curly_bracket_char(latex: &Vec<char>, start: usize) -> Option<usize> {
     let mut count = 1;
     let mut pos = start + 1;
@@ -311,6 +332,29 @@ fn find_matching_right_curly_bracket_char(latex: &Vec<char>, start: usize) -> Op
         match latex[pos] {
             '{' => count += 1,
             '}' => count -= 1,
+            _ => {}
+        }
+        pos += 1;
+    }
+
+    Some(pos - 1)
+}
+
+fn find_matching_right_square_bracket_char(latex: &Vec<char>, start: usize) -> Option<usize> {
+    let mut count = 1;
+    let mut pos = start;
+
+    while count > 0 {
+        if pos >= latex.len() {
+            return None;
+        }
+        if pos + 1 < latex.len() && latex[pos] == '\\' && latex[pos + 1] == ']' {
+            pos += 2;
+            continue;
+        }
+        match latex[pos] {
+            '[' => count += 1,
+            ']' => count -= 1,
             _ => {}
         }
         pos += 1;
@@ -350,8 +394,8 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
             pos += 1;
             if latex.get(pos) == Some(&'[') {
                 pos += 1;
-                if let Some(right_square_bracket) = latex[pos..].iter().position(|&c| c == ']') {
-                    num_of_args = latex[pos..pos + right_square_bracket]
+                if let Some(right_square_bracket) = find_matching_right_square_bracket_char(&latex, pos) {
+                    num_of_args = latex[pos..right_square_bracket]
                         .iter()
                         .collect::<String>()
                         .parse::<usize>()
@@ -359,7 +403,7 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
                     if num_of_args > 2 {
                         return Err("Only unary and binary commands are supported".to_string());
                     }
-                    pos += right_square_bracket;
+                    pos = right_square_bracket;
                 } else {
                     return Err("Unmatched square brackets".to_string());
                 }
@@ -372,9 +416,9 @@ pub fn parse_custom_macros(latex: &str) -> Result<Vec<CustomMacro>, String> {
             let default_value: Option<String>;
             if latex.get(pos) == Some(&'[') {
                 pos += 1;
-                if let Some(right_square_bracket) = latex[pos..].iter().position(|&c| c == ']') {
-                    default_value = Some(latex[pos..pos + right_square_bracket].iter().collect::<String>());
-                    pos += right_square_bracket;
+                if let Some(right_square_bracket) = find_matching_right_square_bracket_char(&latex, pos) {
+                    default_value = Some(latex[pos..right_square_bracket].iter().collect::<String>());
+                    pos = right_square_bracket;
                 } else {
                     return Err("Unmatched square brackets".to_string());
                 }
@@ -717,17 +761,16 @@ mod tests {
     }
 
     #[test]
-    fn test_error_handling() {
+    fn test_recurive_square_brackets() {
         let macro_string = r"\newcommand{\pp}[2][]{\expanded{#1}{#2}}";
-        let tex = r"\pp[f]{x}";
+        let tex = r"\pp[f[x]]{x}";
 
         let custom_macros = parse_custom_macros(macro_string);
-        // assert!(custom_macros.is_err());
 
         let mut registry = CommandRegistry::new();
         registry.register_custom_macros(custom_macros.unwrap());
         let tokens = tokenize(tex).unwrap();
         let expaned = registry.expand_macros(&tokens).unwrap();
-        dbg!(expaned);
+        assert_eq!(expaned, tokenize(r"\expanded{f[x]}{x}").unwrap());
     }
 }
