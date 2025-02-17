@@ -1,5 +1,6 @@
 use crate::command_registry::{parse_custom_macros, CommandRegistry};
 use crate::tex_parser::LatexParser;
+use crate::typst_writer::SymbolShorthand;
 use regex::{Captures, Regex};
 
 pub mod command_registry;
@@ -200,4 +201,31 @@ pub fn replace_all<E>(
     }
     new.push_str(&haystack[last_match..]);
     Ok(new)
+}
+
+pub fn tex2typst_with_shorthands(tex: &str, shorthands: &Vec<SymbolShorthand>) -> Result<String, String> {
+    let tex_tree = tex_parser::parse_tex(tex)?;
+    let typst_tree = converter::convert_tree(&tex_tree)?;
+    let mut writer = typst_writer::TypstWriter::new();
+    writer.serialize(&typst_tree)?;
+    writer.replace_with_shorthand(shorthands);
+    let typst = writer.finalize()?;
+    Ok(typst)
+}
+
+pub fn text_and_tex2typst_with_shorthands(input: &str, shorthands: &Vec<SymbolShorthand>) -> Result<String, String> {
+    let regex = Regex::new(r"\\\((.+?)\\\)|(?s)\\\[(.+?)\\\]").unwrap();
+
+    replace_all(&regex, input, |caps: &Captures| {
+        if let Some(inline_math) = caps.get(1) {
+            let typst_math = tex2typst_with_shorthands(inline_math.as_str().trim(), shorthands)?;
+            Ok(format!("${}$", typst_math))
+        } else if let Some(display_math) = caps.get(2) {
+            let typst_math =
+                tex2typst_with_shorthands(display_math.as_str().trim(), shorthands).map_err(|e| e.to_string())?;
+            Ok(format!("$\n{}\n$", typst_math))
+        } else {
+            Ok(caps[0].to_string())
+        }
+    })
 }

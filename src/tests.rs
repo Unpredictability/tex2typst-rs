@@ -167,7 +167,32 @@ mod test_shorthand {
         let typst_tree = crate::converter::convert_tree(&tex_tree).unwrap();
         let mut writer = crate::typst_writer::TypstWriter::new();
         writer.serialize(&typst_tree).unwrap();
-        writer.replace_with_shorthand(shorthands);
+        writer.replace_with_shorthand(&shorthands);
         dbg!(writer.queue);
+    }
+
+    #[test]
+    fn test_lib_shorthand() {
+        let shorthands = vec![
+            SymbolShorthand {
+                original: "plus.minus".to_string(),
+                shorthand: "+-".to_string(),
+            },
+            SymbolShorthand {
+                original: "integral".to_string(),
+                shorthand: "int".to_string(),
+            },
+            SymbolShorthand {
+                original: "arrow.r.long".to_string(),
+                shorthand: "-->".to_string(),
+            },
+            SymbolShorthand {
+                original: "arrow.r.double.long".to_string(),
+                shorthand: "==>".to_string(),
+            },
+        ];
+        let tex = r"\longrightarrow \Longrightarrow \pm \int_a^b";
+        let result = crate::tex2typst_with_shorthands(tex, &shorthands).unwrap();
+        assert_eq!(result, "--> ==> +- int_a^b");
     }
 }

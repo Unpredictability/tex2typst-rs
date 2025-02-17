@@ -304,9 +304,9 @@ impl TypstWriter {
         self.queue.clear();
     }
 
-    pub fn replace_with_shorthand(&mut self, shorthand_list: Vec<SymbolShorthand>) {
+    pub fn replace_with_shorthand(&mut self, shorthand_list: &Vec<SymbolShorthand>) {
         for token in self.queue.iter_mut() {
-            for shorthand in &shorthand_list {
+            for shorthand in shorthand_list {
                 if token.value == shorthand.original {
                     token.value = shorthand.shorthand.clone();
                 }
