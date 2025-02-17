@@ -6,11 +6,11 @@ pub mod command_registry;
 pub mod converter;
 pub mod definitions;
 pub mod map;
+mod tests;
 pub mod tex_parser;
 pub mod tex_parser_utils;
 pub mod tex_tokenizer;
 pub mod typst_writer;
-mod tests;
 
 /// Converts a given TeX string to a Typst string.
 ///
@@ -49,6 +49,37 @@ pub fn tex2typst(tex: &str) -> Result<String, String> {
     Ok(typst)
 }
 
+/// Converts a given TeX string to a Typst string with custom macro definitions.
+///
+/// This function takes a TeX string and a string containing macro definitions as input,
+/// tokenizes the TeX string, parses the custom macros, registers them, expands the macros,
+/// parses the expanded tokens into a TeX tree, converts the TeX tree to a Typst tree,
+/// serializes the Typst tree, and returns the resulting Typst string.
+///
+/// # Arguments
+///
+/// * `tex` - A string slice that holds the TeX input.
+/// * `macro_definitions` - A string slice that holds the custom macro definitions.
+///
+/// # Returns
+///
+/// * `Result<String, String>` - On success, returns the Typst string wrapped in `Ok`.
+///   On failure, returns an error message wrapped in `Err`.
+///
+/// # Errors
+///
+/// This function will return an error if the tokenization, macro parsing, macro expansion,
+/// TeX parsing, conversion, or serialization fails.
+///
+/// # Example
+///
+/// ```
+/// use tex2typst_rs::tex2typst_with_macros;
+/// let tex_input = r"\foo";
+/// let macro_definitions = r"\newcommand{\foo}{bar}";
+/// let typst_output = tex2typst_with_macros(tex_input, macro_definitions).unwrap();
+/// println!("{}", typst_output);
+/// ```
 pub fn tex2typst_with_macros(tex: &str, macro_definitions: &str) -> Result<String, String> {
     let tokens = tex_tokenizer::tokenize(tex)?;
     let custom_macros = parse_custom_macros(macro_definitions)?;
@@ -108,6 +139,52 @@ pub fn text_and_tex2typst(input: &str) -> Result<String, String> {
     })
 }
 
+/// Converts a given input string containing TeX math expressions to Typst format with custom macro definitions.
+///
+/// This function searches for inline and display math expressions within the input string,
+/// converts them to Typst format using the `tex2typst_with_macros` function, and returns the resulting string.
+///
+/// # Arguments
+///
+/// * `input` - A string slice that holds the input text containing TeX math expressions.
+/// * `macro_definitions` - A string slice that holds the custom macro definitions.
+///
+/// # Returns
+///
+/// * `Result<String, String>` - On success, returns the converted string wrapped in `Ok`.
+///   On failure, returns an error message wrapped in `Err`.
+///
+/// # Errors
+///
+/// This function will return an error if the TeX to Typst conversion fails.
+///
+/// # Example
+///
+/// ```
+/// use tex2typst_rs::text_and_tex2typst_with_macros;
+/// let input = r"This is inline math: \(\foo\) and this is display math: \[\foo\]";
+/// let macro_definitions = r"\newcommand{\foo}{bar}";
+/// let output = text_and_tex2typst_with_macros(input, macro_definitions).unwrap();
+/// println!("{}", output);
+/// ```
+pub fn text_and_tex2typst_with_macros(input: &str, macro_definitions: &str) -> Result<String, String> {
+    let regex = Regex::new(r"\\\((.+?)\\\)|(?s)\\\[(.+?)\\\]").unwrap();
+
+    replace_all(&regex, input, |caps: &Captures| {
+        if let Some(inline_math) = caps.get(1) {
+            let typst_math = tex2typst_with_macros(inline_math.as_str().trim(), macro_definitions)?;
+            Ok(format!("${}$", typst_math))
+        } else if let Some(display_math) = caps.get(2) {
+            let typst_math =
+                tex2typst_with_macros(display_math.as_str().trim(), macro_definitions).map_err(|e| e.to_string())?;
+            Ok(format!("$\n{}\n$", typst_math))
+        } else {
+            Ok(caps[0].to_string())
+        }
+    })
+}
+
+/// Custom implementation of `Regex::replace_all` for error handling.
 pub fn replace_all<E>(
     re: &Regex,
     haystack: &str,
