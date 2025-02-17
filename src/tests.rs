@@ -136,3 +136,38 @@ mod test_custom_macros {
         assert_eq!(result, "(diff f [x])/(diff y)");
     }
 }
+
+#[cfg(test)]
+mod test_shorthand {
+    use crate::tex_tokenizer::tokenize;
+    use crate::typst_writer::SymbolShorthand;
+
+    #[test]
+    fn test_shorthand() {
+        let shorthands = vec![
+            SymbolShorthand {
+                original: "plus.minus".to_string(),
+                shorthand: "+-".to_string(),
+            },
+            SymbolShorthand {
+                original: "integral".to_string(),
+                shorthand: "int".to_string(),
+            },
+            SymbolShorthand {
+                original: "arrow.r.long".to_string(),
+                shorthand: "-->".to_string(),
+            },
+            SymbolShorthand {
+                original: "arrow.r.double.long".to_string(),
+                shorthand: "==>".to_string(),
+            },
+        ];
+        let tex = r"\longrightarrow \Longrightarrow \pm \int_a^b";
+        let tex_tree = crate::tex_parser::parse_tex(tex).unwrap();
+        let typst_tree = crate::converter::convert_tree(&tex_tree).unwrap();
+        let mut writer = crate::typst_writer::TypstWriter::new();
+        writer.serialize(&typst_tree).unwrap();
+        writer.replace_with_shorthand(shorthands);
+        dbg!(writer.queue);
+    }
+}

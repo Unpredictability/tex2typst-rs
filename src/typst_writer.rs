@@ -23,8 +23,8 @@ static TYPST_NEWLINE: LazyLock<TypstToken> = LazyLock::new(|| TypstToken {
 });
 
 pub struct TypstWriter {
-    buffer: String,
-    queue: Vec<TypstToken>,
+    pub buffer: String,
+    pub queue: Vec<TypstToken>,
     inside_function_depth: usize,
 }
 
@@ -86,7 +86,7 @@ impl TypstWriter {
         use TypstNodeType as N;
         use TypstTokenType as T;
         match node.node_type {
-            N::Empty => {Ok(())}
+            N::Empty => Ok(()),
             N::Atom => {
                 if node.content == "," && self.inside_function_depth > 0 {
                     self.queue.push(TypstToken::new(T::Symbol, "comma".to_string()));
@@ -304,6 +304,16 @@ impl TypstWriter {
         self.queue.clear();
     }
 
+    pub fn replace_with_shorthand(&mut self, shorthand_list: Vec<SymbolShorthand>) {
+        for token in self.queue.iter_mut() {
+            for shorthand in &shorthand_list {
+                if token.value == shorthand.original {
+                    token.value = shorthand.shorthand.clone();
+                }
+            }
+        }
+    }
+
     pub fn finalize(&mut self) -> Result<String, String> {
         self.flush_queue();
 
@@ -340,4 +350,9 @@ impl TypstWriter {
 fn is_delimiter(c: &TypstNode) -> bool {
     matches!(c.node_type, TypstNodeType::Atom)
         && ["(", ")", "[", "]", "{", "}", "|", "⌊", "⌋", "⌈", "⌉"].contains(&c.content.as_str())
+}
+
+pub struct SymbolShorthand {
+    pub original: String,
+    pub shorthand: String,
 }
